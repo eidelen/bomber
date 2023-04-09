@@ -1,9 +1,9 @@
 # bomberworld_plotter.py
 #
-# Produces nice images of the GridworldEnv environment
+# Produces nice images of the Bomberworld environment
 #
-# Author: Giacomo Del Rio
-# Creation date: 23 mar 2023
+# Author: Giacomo Del Rio and modified Adrian Schneider
+# Creation date: 09 April 2023
 
 import itertools
 from pathlib import Path

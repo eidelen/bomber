@@ -1,4 +1,6 @@
 # bomberworld.py
+# Initial copied from Giacomo Del Rio, IDSIA
+
 from typing import Optional, Tuple
 
 import gymnasium as gym
@@ -11,32 +13,46 @@ class GridworldEnv(gym.Env):
         self.size = size
         self.max_steps = max_steps
         self.agent_pos = (0, 0)
-        self.goal_pos = (1, 1)
         self.current_step = 0
+        self.board = np.zeros(shape=(self.size, self.size), dtype=np.uint8)
 
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(size, size, 1), dtype=np.uint8)
-        self.action_space = gym.spaces.Discrete(4)
-
-
+        self.action_space = gym.spaces.Discrete(5)
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[np.ndarray, dict]:
         super().reset(seed=seed)
 
-        while True:
-            self.agent_pos = tuple(self.np_random.integers(low=0, high=self.size, size=2))
-            self.goal_pos = tuple(self.np_random.integers(low=0, high=self.size, size=2))
-            if self.agent_pos != self.goal_pos:
-                break
+        self.board = np.zeros(shape=(self.size, self.size), dtype=np.uint8)
+        self.agent_pos = tuple(self.np_random.integers(low=0, high=self.size, size=2))
 
         self.current_step = 0
 
         return self.make_observation(), {}
 
+    def is_valid_pos(self, pos: Tuple[int, int]) -> bool:
+        m, n = pos
+        return (-1 < m < self.size) and (-1 < n < self.size)
+
+    def can_move_to_pos(self, pos: Tuple[int, int]) -> bool:
+        return self.is_valid_pos(pos) and self.board[pos] > 0
+
     def make_observation(self) -> np.ndarray:
         o = np.zeros(shape=(self.size, self.size), dtype=np.uint8)
         o[self.agent_pos] = 255
-        o[self.goal_pos] = 127
-        return o.reshape((self.size, self.size, 1))
+        return o #o.reshape((self.size, self.size, 1))
+
+    def bomb_3x3(self, pos: Tuple[int, int]) -> int:
+        pm, pn = pos
+
+        n_bombed = 0
+
+        for m in range(pm - 1, pm + 2):
+            for n in range(pn - 1, pn + 2):
+                if self.is_valid_pos((m, n)) and self.board[(m, n)] == 0:
+                    self.board[(m, n)] = 128
+                    n_bombed += 1
+
+        return n_bombed
 
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, dict]:
