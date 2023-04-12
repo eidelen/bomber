@@ -1,3 +1,4 @@
+import math
 import unittest
 import numpy as np
 import bomberworld
@@ -43,14 +44,12 @@ class MyTestCase(unittest.TestCase):
         self.assertFalse(env.can_move_to_pos((size, size)))
 
     def test_bomb_3x3(self):
-        # test function which checks if position is on the board
         size = 10
         env = bomberworld.GridworldEnv(size, 100)
 
         # bomb upper left corner
         env.board = np.zeros(shape=(size, size), dtype=np.uint8)
         self.assertEqual(env.bomb_3x3((0,0)), 4)
-        print(env.board)
         for m in range(0, size):
             for n in range(0, size):
                 if m < 2 and n < 2:
@@ -61,7 +60,6 @@ class MyTestCase(unittest.TestCase):
         # bomb 1, 1
         env.board = np.zeros(shape=(size, size), dtype=np.uint8)
         self.assertEqual(env.bomb_3x3((1, 1)), 9)
-        print(env.board)
         for m in range(0, size):
             for n in range(0, size):
                 if m < 3 and n < 3:
@@ -70,9 +68,42 @@ class MyTestCase(unittest.TestCase):
                     self.assertTrue(env.board[(m, n)] == 0)
 
     def test_reset(self):
-        env = bomberworld.GridworldEnv(10, 100)
-        o, info = env.reset()
+        size = 10
+        env = bomberworld.GridworldEnv(size, 100)
+        env.reset()
 
+        # check that no stones around agent but everywhere else
+        a_m, a_n = env.agent_pos
+        for m in range(0, size):
+            for n in range(0, size):
+                l2_dist_to_agent = math.sqrt((a_m - m)**2 + (a_n - n)**2)
+                if l2_dist_to_agent < 1.0:
+                    self.assertTrue(env.board[(m, n)] == 255)
+                elif l2_dist_to_agent < 2.0:
+                    self.assertTrue(env.board[(m, n)] == 128)
+                else:
+                    self.assertTrue(env.board[(m, n)] == 0)
+
+
+    def test_move_actions(self):
+        size = 10
+        env = bomberworld.GridworldEnv(size, 100)
+        env.set_initial_board((0,0))
+
+        # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
+        obs, reward, _, _, _ = env.step(0) # up not possible
+        self.assertAlmostEqual(reward, -1.0)
+
+        obs, reward, _, _, _ = env.step(3)  # left not possible
+        self.assertAlmostEqual(reward, -1.0)
+
+        obs, reward, _, _, _ = env.step(1)  # right possible
+        self.assertAlmostEqual(reward, 0.0)
+        self.assertEqual(env.agent_pos, (0,1))
+
+        print(env.board)
+
+        # continue with other move actions
 
 
         # plotter = GridworldPlotter(size=env.size, goal_pos=env.goal_pos)

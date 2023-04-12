@@ -21,13 +21,19 @@ class GridworldEnv(gym.Env):
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[np.ndarray, dict]:
         super().reset(seed=seed)
-
-        self.board = np.zeros(shape=(self.size, self.size), dtype=np.uint8)
-        self.agent_pos = tuple(self.np_random.integers(low=0, high=self.size, size=2))
-
         self.current_step = 0
-
+        self.set_initial_board(tuple(self.np_random.integers(low=0, high=self.size, size=2)))
         return self.make_observation(), {}
+
+    def set_initial_board(self, agent_pos):
+        self.board = np.zeros(shape=(self.size, self.size), dtype=np.uint8)
+        self.agent_pos = agent_pos
+
+        # initially remove all 8 stones around the agent
+        self.bomb_3x3(agent_pos)
+
+        # set agent in the center
+        self.board[agent_pos] = 255
 
     def is_valid_pos(self, pos: Tuple[int, int]) -> bool:
         m, n = pos
@@ -37,9 +43,7 @@ class GridworldEnv(gym.Env):
         return self.is_valid_pos(pos) and self.board[pos] > 0
 
     def make_observation(self) -> np.ndarray:
-        o = np.zeros(shape=(self.size, self.size), dtype=np.uint8)
-        o[self.agent_pos] = 255
-        return o #o.reshape((self.size, self.size, 1))
+        return self.board #o.reshape((self.size, self.size, 1))
 
     def bomb_3x3(self, pos: Tuple[int, int]) -> int:
         pm, pn = pos
@@ -57,34 +61,33 @@ class GridworldEnv(gym.Env):
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, dict]:
 
-        reward = 0
+        reward = 0.0
 
-        if action == 0: # up
-            if self.agent_pos[0] == 0:
-                reward = -1
-            else:
-                self.agent_pos = (self.agent_pos[0]-1, self.agent_pos[1])
-        elif action == 1: # right
-            if self.agent_pos[1] == self.size - 1:
-                reward = -1
-            else:
-                self.agent_pos = (self.agent_pos[0], self.agent_pos[1] + 1)
-        elif action == 2:  # down
-            if self.agent_pos[0] == self.size - 1:
-                reward = -1
-            else:
-                self.agent_pos = (self.agent_pos[0]+1, self.agent_pos[1])
-        elif action == 3:  # left
-            if self.agent_pos[1] == 0:
-                reward = -1
-            else:
-                self.agent_pos = (self.agent_pos[0], self.agent_pos[1] - 1)
+        if action < 4: # move actions
+            if action == 0: # up
+                next_pos = (self.agent_pos[0]-1, self.agent_pos[1])
+            elif action == 1: # right
+                next_pos = (self.agent_pos[0], self.agent_pos[1]+1)
+            elif action == 2:  # down
+                next_pos = (self.agent_pos[0]+1, self.agent_pos[1])
+            elif action == 3:  # left
+                next_pos = (self.agent_pos[0], self.agent_pos[1]-1)
 
-        if self.agent_pos == self.goal_pos:
+            if self.can_move_to_pos(next_pos):
+                self.board[self.agent_pos] = 128
+                self.agent_pos = next_pos
+                self.board[self.agent_pos] = 255
+            else:
+                reward -= 1.0
+
+        elif action == 4: # drop bomb at agent location
+            self.board[self.agent_pos] = 199
+
+        # mission completed when every rock was bombed
+        if (self.board > 0).all():
             reward = 10
             terminated = True
         else:
-            reward = reward - 0.1 # punish each move which does not reach the target
             terminated = False
 
         if self.current_step > self.max_steps:
