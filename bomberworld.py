@@ -6,6 +6,10 @@ from typing import Optional, Tuple
 import gymnasium as gym
 import numpy as np
 
+# best performance
+# 10 x 10 = 100 stones - 6 = 94
+# bombs necessary = 94 / 5 = 19 bombs
+# reward = 94 + 10 - 19 = about 85
 
 class GridworldEnv(gym.Env):
 
@@ -43,7 +47,7 @@ class GridworldEnv(gym.Env):
         return self.is_valid_pos(pos) and self.board[pos] > 0
 
     def make_observation(self) -> np.ndarray:
-        return self.board #o.reshape((self.size, self.size, 1))
+        return self.board.reshape((self.size, self.size, 1))
 
     def bomb_3x3(self, pos: Tuple[int, int]) -> int:
         pm, pn = pos
@@ -81,7 +85,8 @@ class GridworldEnv(gym.Env):
                 reward -= 1.0
 
         elif action == 4: # drop bomb at agent location
-            self.board[self.agent_pos] = 199
+            reward += self.bomb_3x3(self.agent_pos) # 1 reward for every destroyed rock
+            reward -= 1.0 # penalty for each dropped bomb
 
         # mission completed when every rock was bombed
         if (self.board > 0).all():

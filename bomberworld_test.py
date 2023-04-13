@@ -101,9 +101,77 @@ class MyTestCase(unittest.TestCase):
         self.assertAlmostEqual(reward, 0.0)
         self.assertEqual(env.agent_pos, (0,1))
 
-        print(env.board)
+        obs, reward, _, _, _ = env.step(1)  # right again not possible
+        self.assertAlmostEqual(reward, -1.0)
+        self.assertEqual(env.agent_pos, (0, 1))
 
-        # continue with other move actions
+        obs, reward, _, _, _ = env.step(2)  # down possible
+        self.assertAlmostEqual(reward, 0.0)
+        self.assertEqual(env.agent_pos, (1, 1))
+
+        obs, reward, _, _, _ = env.step(2)  # down again not possible
+        self.assertAlmostEqual(reward, -1.0)
+        self.assertEqual(env.agent_pos, (1, 1))
+
+        obs, reward, _, _, _ = env.step(3)  # left possible
+        self.assertAlmostEqual(reward, 0.0)
+        self.assertEqual(env.agent_pos, (1, 0))
+
+        obs, reward, _, _, _ = env.step(3)  # left again not possible
+        self.assertAlmostEqual(reward, -1.0)
+        self.assertEqual(env.agent_pos, (1, 0))
+
+        obs, reward, _, _, _ = env.step(0)  # up possible
+        self.assertAlmostEqual(reward, 0.0)
+        self.assertEqual(env.agent_pos, (0, 0))
+
+    def test_bomb_actions(self):
+        size = 10
+        env = bomberworld.GridworldEnv(size, 100)
+        env.set_initial_board((0, 0))
+
+        obs, reward, _, _, _ = env.step(4)  # no rock bombed
+        self.assertAlmostEqual(reward, -1.0)
+
+        obs, reward, _, _, _ = env.step(1) # move to (0,1)
+        obs, reward, _, _, _ = env.step(4)  # 2 rocks bombed
+        self.assertAlmostEqual(reward, 1.0)
+
+        obs, reward, _, _, _ = env.step(2)  # move to (1,1)
+        obs, reward, _, _, _ = env.step(4)  # 3 rocks bombed
+        self.assertAlmostEqual(reward, 2.0)
+
+    def test_reach_target(self):
+        size = 10
+        env = bomberworld.GridworldEnv(size, 100)
+        env.set_initial_board((0, 0))
+
+        # destroy all rocks
+        env.board.fill(128)
+        env.board[(0, 0)] = 255
+        env.board[(0, 1)] = 0
+
+        obs, reward, terminated, _, _ = env.step(2)  # down
+        self.assertAlmostEqual(reward, 0.0)
+        self.assertFalse(terminated)
+
+        obs, reward, terminated, _, _ = env.step(4)  # bomb and all is destroyed
+        self.assertAlmostEqual(reward, 10.0)
+        self.assertTrue(terminated)
+
+    def test_reach_max(self):
+        size = 10
+        env = bomberworld.GridworldEnv(size, 100)
+        env.reset()
+
+        for i in range(0, 101):
+            _, _, terminated, maxreached, _ = env.step(4)
+            self.assertFalse(maxreached)
+            self.assertFalse(terminated)
+
+        _, _, terminated, maxreached, _ = env.step(4)
+        self.assertTrue(maxreached)
+        self.assertFalse(terminated)
 
 
         # plotter = GridworldPlotter(size=env.size, goal_pos=env.goal_pos)
