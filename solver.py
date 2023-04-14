@@ -18,7 +18,7 @@ def apply_ppo():
     config = PPOConfig()
     config = config.framework(framework='torch')
     config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100})
-    config = config.rollouts(num_rollout_workers=5)
+    config = config.rollouts(num_rollout_workers=3)
     config = config.training(gamma=0.9) # not below 0.7
     config = config.debugging(log_level="ERROR")
 

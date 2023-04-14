@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 
 import gymnasium as gym
 import numpy as np
+import copy
 
 # best performance
 # 10 x 10 = 100 stones - 6 = 94
@@ -47,7 +48,8 @@ class GridworldEnv(gym.Env):
         return self.is_valid_pos(pos) and self.board[pos] > 0
 
     def make_observation(self) -> np.ndarray:
-        return self.board.reshape((self.size, self.size, 1))
+        o = copy.deepcopy(self.board)
+        return o.reshape((self.size, self.size, 1))
 
     def bomb_3x3(self, pos: Tuple[int, int]) -> int:
         pm, pn = pos
