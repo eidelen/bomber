@@ -26,13 +26,13 @@ class MyTestCase(unittest.TestCase):
         env = bomberworld.GridworldEnv(size, 100)
 
         # can move nowhere
-        env.board = np.zeros(shape=(size, size), dtype=np.uint8)
+        env.board = np.zeros(shape=(size, size), dtype=np.float32)
         for m in range(-1, size+1):
             for n in range(-1, size+1):
                 self.assertFalse(env.can_move_to_pos((m, n)))
 
         # can move everywhere
-        env.board = np.ones(shape=(size, size), dtype=np.uint8)
+        env.board = np.ones(shape=(size, size), dtype=np.float32)
         for m in range(0, size):
             for n in range(0, size):
                 self.assertTrue(env.can_move_to_pos((m, n)))
@@ -48,24 +48,24 @@ class MyTestCase(unittest.TestCase):
         env = bomberworld.GridworldEnv(size, 100)
 
         # bomb upper left corner
-        env.board = np.zeros(shape=(size, size), dtype=np.uint8)
+        env.board = np.zeros(shape=(size, size), dtype=np.float32)
         self.assertEqual(env.bomb_3x3((0,0)), 4)
         for m in range(0, size):
             for n in range(0, size):
                 if m < 2 and n < 2:
-                    self.assertTrue(env.board[(m,n)] == 128)
+                    self.assertAlmostEqual(env.board[(m,n)], env.empty_val)
                 else:
-                    self.assertTrue(env.board[(m,n)] == 0)
+                    self.assertAlmostEqual(env.board[(m,n)], env.rock_val)
 
         # bomb 1, 1
-        env.board = np.zeros(shape=(size, size), dtype=np.uint8)
+        env.board = np.zeros(shape=(size, size), dtype=np.float32)
         self.assertEqual(env.bomb_3x3((1, 1)), 9)
         for m in range(0, size):
             for n in range(0, size):
                 if m < 3 and n < 3:
-                    self.assertTrue(env.board[(m, n)] == 128)
+                    self.assertAlmostEqual(env.board[(m, n)], env.empty_val)
                 else:
-                    self.assertTrue(env.board[(m, n)] == 0)
+                    self.assertAlmostEqual(env.board[(m, n)], env.rock_val)
 
     def test_reset(self):
         size = 10
@@ -78,11 +78,11 @@ class MyTestCase(unittest.TestCase):
             for n in range(0, size):
                 l2_dist_to_agent = math.sqrt((a_m - m)**2 + (a_n - n)**2)
                 if l2_dist_to_agent < 1.0:
-                    self.assertTrue(env.board[(m, n)] == 255)
+                    self.assertAlmostEqual(env.board[(m, n)], env.agent_val)
                 elif l2_dist_to_agent < 2.0:
-                    self.assertTrue(env.board[(m, n)] == 128)
+                    self.assertAlmostEqual(env.board[(m, n)], env.empty_val)
                 else:
-                    self.assertTrue(env.board[(m, n)] == 0)
+                    self.assertAlmostEqual(env.board[(m, n)], env.rock_val)
 
 
     def test_move_actions(self):

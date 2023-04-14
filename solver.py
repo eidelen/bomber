@@ -12,17 +12,17 @@ from bomberworld_plotter import GridworldPlotter
 def env_create(env_config: EnvContext):
     return bomberworld.GridworldEnv(**env_config)
 
-def apply_ppo():
+def apply_ppo(gamma: float):
     register_env("GridworldEnv", env_create)
 
     config = PPOConfig()
     config = config.framework(framework='torch')
     config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100})
     config = config.rollouts(num_rollout_workers=3)
-    config = config.training(gamma=0.9) # not below 0.7
+    config = config.training(gamma=gamma) # not below 0.7
     config = config.debugging(log_level="ERROR")
 
-    experiment_name = f"PPO_GRIDWORLD_{datetime.now():%Y-%m-%d_%H-%M-%S}"
+    experiment_name = f"PPO_GRIDWORLD_{datetime.now():%Y-%m-%d_%H-%M-%S}_GAMMA={gamma}"
 
     tuner = Tuner(
         trainable=PPO,
@@ -38,4 +38,4 @@ def apply_ppo():
     tuner.fit()
 
 if __name__ == '__main__':
-    apply_ppo()
+    apply_ppo(0.9)

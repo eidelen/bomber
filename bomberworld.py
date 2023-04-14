@@ -15,13 +15,19 @@ import copy
 class GridworldEnv(gym.Env):
 
     def __init__(self, size: int, max_steps: int):
+
+        # definitions
+        self.rock_val = 0.0
+        self.agent_val = 1.0
+        self.empty_val = 0.5
+
         self.size = size
         self.max_steps = max_steps
         self.agent_pos = (0, 0)
         self.current_step = 0
-        self.board = np.zeros(shape=(self.size, self.size), dtype=np.uint8)
+        self.board = np.zeros((self.size, self.size), dtype=np.float32)
 
-        self.observation_space = gym.spaces.Box(low=0, high=255, shape=(size, size, 1), dtype=np.uint8)
+        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(size * size,), dtype=np.float32)
         self.action_space = gym.spaces.Discrete(5)
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[np.ndarray, dict]:
@@ -31,25 +37,25 @@ class GridworldEnv(gym.Env):
         return self.make_observation(), {}
 
     def set_initial_board(self, agent_pos):
-        self.board = np.zeros(shape=(self.size, self.size), dtype=np.uint8)
+        self.board = np.zeros(shape=(self.size, self.size), dtype=np.float32)
         self.agent_pos = agent_pos
 
         # initially remove all 8 stones around the agent
         self.bomb_3x3(agent_pos)
 
         # set agent in the center
-        self.board[agent_pos] = 255
+        self.board[agent_pos] = self.agent_val
 
     def is_valid_pos(self, pos: Tuple[int, int]) -> bool:
         m, n = pos
         return (-1 < m < self.size) and (-1 < n < self.size)
 
     def can_move_to_pos(self, pos: Tuple[int, int]) -> bool:
-        return self.is_valid_pos(pos) and self.board[pos] > 0
+        return self.is_valid_pos(pos) and self.board[pos] > 0.0
 
     def make_observation(self) -> np.ndarray:
         o = copy.deepcopy(self.board)
-        return o.reshape((self.size, self.size, 1))
+        return o.flatten()
 
     def bomb_3x3(self, pos: Tuple[int, int]) -> int:
         pm, pn = pos
@@ -59,7 +65,7 @@ class GridworldEnv(gym.Env):
         for m in range(pm - 1, pm + 2):
             for n in range(pn - 1, pn + 2):
                 if self.is_valid_pos((m, n)) and self.board[(m, n)] == 0:
-                    self.board[(m, n)] = 128
+                    self.board[(m, n)] = self.empty_val
                     n_bombed += 1
 
         return n_bombed
@@ -80,9 +86,9 @@ class GridworldEnv(gym.Env):
                 next_pos = (self.agent_pos[0], self.agent_pos[1]-1)
 
             if self.can_move_to_pos(next_pos):
-                self.board[self.agent_pos] = 128
+                self.board[self.agent_pos] = self.empty_val
                 self.agent_pos = next_pos
-                self.board[self.agent_pos] = 255
+                self.board[self.agent_pos] = self.agent_val
             else:
                 reward -= 1.0
 
@@ -91,7 +97,7 @@ class GridworldEnv(gym.Env):
             reward -= 1.0 # penalty for each dropped bomb
 
         # mission completed when every rock was bombed
-        if (self.board > 0).all():
+        if (self.board > 0.0).all():
             reward = 10
             terminated = True
         else:
