@@ -18,9 +18,15 @@ def apply_ppo(gamma: float):
     config = PPOConfig()
     config = config.framework(framework='torch')
     config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100})
+
+    # Error -> no attribute model
+    #config = config.model['fcnet_hiddens'] = [255, 255, 128, 64]
+    #config = config.model['fcnet_activation'] = 'relu'
+
     config = config.rollouts(num_rollout_workers=3)
     config = config.training(gamma=gamma) # not below 0.7
     config = config.debugging(log_level="ERROR")
+
 
     experiment_name = f"PPO_GRIDWORLD_{datetime.now():%Y-%m-%d_%H-%M-%S}_GAMMA={gamma}"
 
