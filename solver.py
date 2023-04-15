@@ -12,7 +12,7 @@ from bomberworld_plotter import GridworldPlotter
 def env_create(env_config: EnvContext):
     return bomberworld.GridworldEnv(**env_config)
 
-def apply_ppo(gamma: float, nn_model: list):
+def apply_ppo(gamma: float, nn_model: list, activation: str):
     register_env("GridworldEnv", env_create)
 
     config = PPOConfig()
@@ -21,14 +21,14 @@ def apply_ppo(gamma: float, nn_model: list):
 
 
     config.model['fcnet_hiddens'] = nn_model
-    config.model['fcnet_activation'] = 'relu'
+    config.model['fcnet_activation'] = activation
 
-    config = config.rollouts(num_rollout_workers=3)
+    config = config.rollouts(num_rollout_workers=11)
     config = config.training(gamma=gamma) # not below 0.7
     config = config.debugging(log_level="ERROR")
 
 
-    experiment_name = f"PPO_GRIDWORLD_{datetime.now():%H-%M}_GAMMA={gamma}_MODEL={nn_model}"
+    experiment_name = f"PPO_GRIDWORLD_{datetime.now():%H-%M}_GAMMA={gamma}_MODEL={nn_model}_ACT={activation}"
 
     tuner = Tuner(
         trainable=PPO,
@@ -44,5 +44,5 @@ def apply_ppo(gamma: float, nn_model: list):
     tuner.fit()
 
 if __name__ == '__main__':
-    apply_ppo(0.9, [256, 128, 64])
+    apply_ppo(0.9, [256, 128, 64], "relu")
 
