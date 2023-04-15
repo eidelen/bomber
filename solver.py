@@ -23,7 +23,7 @@ def apply_ppo(gamma: float, nn_model: list, activation: str):
     config.model['fcnet_hiddens'] = nn_model
     config.model['fcnet_activation'] = activation
 
-    config = config.rollouts(num_rollout_workers=11)
+    config = config.rollouts(num_rollout_workers=3)
     config = config.training(gamma=gamma) # not below 0.7
     config = config.debugging(log_level="ERROR")
 
@@ -37,7 +37,7 @@ def apply_ppo(gamma: float, nn_model: list, activation: str):
             name=experiment_name,
             local_dir="out",
             verbose=2,
-            stop=MaximumIterationStopper(100),
+            stop=MaximumIterationStopper(1000),
             checkpoint_config=air.CheckpointConfig(checkpoint_frequency=50)
         )
     )

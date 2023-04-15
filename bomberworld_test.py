@@ -173,6 +173,63 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(maxreached)
         self.assertFalse(terminated)
 
+    def test_good_run(self):
+
+        reward = 0.0
+        size = 10
+        env = bomberworld.GridworldEnv(size, 100)
+        env.set_initial_board((1, 1))
+
+        for i in range(0, 7):
+            _, r, terminated, _, _ = env.step(2) # down
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 7):
+            _, r, terminated, _, _ = env.step(1) # right
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 7):
+            _, r, terminated, _, _ = env.step(0) # up
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 4):
+            _, r, terminated, _, _ = env.step(3)  # left
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 4):
+            _, r, terminated, _, _ = env.step(2) # down
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 1):
+            _, r, terminated, _, _ = env.step(1) # right
+            self.assertFalse(terminated)
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            self.assertFalse(terminated)
+            reward += r
+
+        _, r, terminated, _, _ = env.step(0)  # up
+        reward += r
+        self.assertFalse(terminated)
+        _, r, terminated, _, _ = env.step(4)  # bomb
+        reward += r
+        self.assertTrue(terminated)
+        print(reward)
+
+
+
+
+
 
         # plotter = GridworldPlotter(size=env.size, goal_pos=env.goal_pos)
         #
