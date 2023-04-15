@@ -18,24 +18,32 @@ from numpy.random import default_rng
 
 class GridworldPlotter:
 
-    def __init__(self, size: int, goal_pos: Tuple[int, int], walls: np.ndarray = None):
+    def __init__(self, size: int, walls: np.ndarray = None):
         self.size = size
-        self.goal_pos = goal_pos
         self.walls = walls
 
         self.agent_traj: List[Tuple[int, int]] = []
+        self.bomb_traj: List[Tuple[int, int]] = []
+        self.stones: np.ndarray = np.zeros((self.size, self.size), dtype=np.float32)
         self.agent_shape = [[.2, .6], [.2, .3], [.3, .1], [.7, .1], [.8, .3], [.8, .6]]
 
-    def add_frame(self, agent_position: Tuple[int, int]) -> None:
-        self.agent_traj.append(agent_position)
+    def add_frame(self, agent_position: Tuple[int, int], bombed: bool, stones: np.ndarray ) -> None:
+        if bombed:
+            self.bomb_traj.append(agent_position)
+        else:
+            self.agent_traj.append(agent_position)
+
+        self.stones = stones
 
     def plot_episode(self, out_file: Optional[Union[str, Path]] = None):
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=mpl.figure.figaspect(1))
 
         self.draw_grid(ax)
+
+        self.draw_bombs(ax, self.bomb_traj, color='yellow', radius=1)
+        self.draw_stones(ax, self.stones, color='red', radius=1)
         self.draw_path(ax, self.agent_traj, color='darkred', line_width=2)
         self.draw_agent(ax, self.agent_traj[0][0], self.agent_traj[0][1])
-        self.draw_goal(ax, self.goal_pos[0], self.goal_pos[1])
 
         ax.set_xlim(0, self.size)
         ax.set_ylim(0, self.size)
@@ -62,7 +70,6 @@ class GridworldPlotter:
         if episode_trajectory is not None:
             self.draw_path(ax, episode_trajectory, color='c', line_width=2)
         self.draw_agent(ax, agent_start_pos[0], agent_start_pos[1])
-        self.draw_goal(ax, self.goal_pos[0], self.goal_pos[1])
 
         ax.set_xlim(0, self.size)
         ax.set_ylim(0, self.size)
@@ -78,6 +85,19 @@ class GridworldPlotter:
         rng = default_rng()
         trj = [(c + rng.uniform(0.3, 0.7), r + rng.uniform(0.3, 0.7)) for r, c in path]
         ax.add_patch(patches.Polygon(trj, closed=False, ec=color, lw=line_width, fill=False))
+
+    @staticmethod
+    def draw_bombs(ax: mpl.axes.Axes, bombs: List[Tuple[int, int]], color, radius):
+        for m, n in bombs:
+            ax.add_patch(patches.Ellipse((n+0.5, m+0.5), width=radius, height=radius, facecolor=color))
+
+    @staticmethod
+    def draw_stones(ax: mpl.axes.Axes, stones: np.ndarray, color, radius):
+        ms, ns = stones.shape
+        for m in range(0, ms):
+            for n in range(0, ns):
+                if stones[(m,n)] < 0.1:
+                    ax.add_patch(patches.Ellipse((n+0.5, m+0.5), width=radius, height=radius, facecolor=color))
 
     def draw_grid(self, ax: mpl.axes.Axes):
         for i in range(self.size + 1):

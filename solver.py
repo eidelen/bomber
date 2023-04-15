@@ -7,7 +7,6 @@ from ray.tune import register_env, tune, Tuner
 from ray.tune.stopper import MaximumIterationStopper
 
 import bomberworld
-from bomberworld_plotter import GridworldPlotter
 
 def env_create(env_config: EnvContext):
     return bomberworld.GridworldEnv(**env_config)
