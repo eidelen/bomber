@@ -40,9 +40,9 @@ class GridworldPlotter:
 
         self.draw_grid(ax)
 
-        self.draw_bombs(ax, self.bomb_traj, color='yellow', radius=1)
-        self.draw_stones(ax, self.stones, color='red', radius=1)
-        self.draw_path(ax, self.agent_traj, color='darkred', line_width=2)
+        self.draw_stones(ax, self.stones)
+        self.draw_path(ax, self.agent_traj, color='red', line_width=1)
+        self.draw_bombs(ax, self.bomb_traj)
         self.draw_agent(ax, self.agent_traj[0][0], self.agent_traj[0][1])
 
         ax.set_xlim(0, self.size)
@@ -87,27 +87,26 @@ class GridworldPlotter:
         ax.add_patch(patches.Polygon(trj, closed=False, ec=color, lw=line_width, fill=False))
 
     @staticmethod
-    def draw_bombs(ax: mpl.axes.Axes, bombs: List[Tuple[int, int]], color, radius):
+    def draw_bombs(ax: mpl.axes.Axes, bombs: List[Tuple[int, int]]):
+        index = 0
         for m, n in bombs:
-            ax.add_patch(patches.Ellipse((n+0.5, m+0.5), width=radius, height=radius, facecolor=color))
+            ax.add_patch(patches.Ellipse((n+0.5, m+0.5), width=0.8, height=0.8, ec="black", fill=False))
+            ax.text(n+0.3, m+0.6, str(index))
+            index += 1
+
 
     @staticmethod
-    def draw_stones(ax: mpl.axes.Axes, stones: np.ndarray, color, radius):
+    def draw_stones(ax: mpl.axes.Axes, stones: np.ndarray):
         ms, ns = stones.shape
         for m in range(0, ms):
             for n in range(0, ns):
                 if stones[(m,n)] < 0.1:
-                    ax.add_patch(patches.Ellipse((n+0.5, m+0.5), width=radius, height=radius, facecolor=color))
+                    ax.add_patch(patches.Rectangle((n+0.125, m+0.125), width=0.75, height=0.75, ec='black', fc='grey', fill=True))
 
     def draw_grid(self, ax: mpl.axes.Axes):
         for i in range(self.size + 1):
             ax.axhline(y=i, c='k', lw=2)
             ax.axvline(x=i, c='k', lw=2)
-
-        if self.walls is not None:
-            for r, c in itertools.product(range(self.size), range(self.size)):
-                if self.walls[r, c] == -1:
-                    ax.add_patch(patches.Rectangle((.1 + r, .1 + c), .8, .8, lw=0, fc='grey', fill=True))
 
     def draw_agent(self, ax: mpl.axes.Axes, row: int, col: int):
         agent_shape = [(r + col, c + row) for r, c in self.agent_shape]
