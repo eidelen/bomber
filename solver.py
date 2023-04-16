@@ -36,12 +36,26 @@ def apply_ppo(gamma: float, nn_model: list, activation: str):
             name=experiment_name,
             local_dir="out",
             verbose=2,
-            stop=MaximumIterationStopper(1000),
+            stop=MaximumIterationStopper(10),
             checkpoint_config=air.CheckpointConfig(checkpoint_frequency=50)
         )
     )
+
     tuner.fit()
 
+def resume_training():
+    # restore checkpoint and resume learning
+    # rsc: https://discuss.ray.io/t/unable-to-restore-fully-trained-checkpoint/8259/8
+    # rsc: https://github.com/ray-project/ray/issues/4569
+    # Note: The call works, but training does not continue (max iter reached?!)
+    tuner = Tuner.restore(
+        "/Users/eidelen/dev/bomber/out/PPO_GRIDWORLD_15-52_GAMMA=0.8_MODEL=[256, 256, 128, 64]_ACT=relu")
+
+    tuner
+    tuner.fit()
+
+
 if __name__ == '__main__':
-    apply_ppo(0.9, [256, 128, 64], "relu")
+    resume_training()
+    #apply_ppo(0.8, [256, 256, 128, 64], "relu")
 
