@@ -59,27 +59,6 @@ class GridworldPlotter:
 
         plt.close()
 
-    def plot_rollouts(self, rollouts: List[List[Tuple[int, int]]], agent_start_pos: Tuple[int, int],
-                      episode_trajectory: Optional[List[Tuple[int, int]]],
-                      out_file: Union[str, Path]):
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=mpl.figure.figaspect(1))
-
-        self.draw_grid(ax)
-        for r in rollouts:
-            self.draw_path(ax, r, color='darkred', line_width=0.5)
-        if episode_trajectory is not None:
-            self.draw_path(ax, episode_trajectory, color='c', line_width=2)
-        self.draw_agent(ax, agent_start_pos[0], agent_start_pos[1])
-
-        ax.set_xlim(0, self.size)
-        ax.set_ylim(0, self.size)
-        ax.set_ylim(ax.get_ylim()[::-1])
-        ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
-        fig.tight_layout()
-
-        fig.savefig(out_file, dpi=200, bbox_inches='tight')
-        plt.close()
-
     @staticmethod
     def draw_path(ax: mpl.axes.Axes, path: List[Tuple[int, int]], color, line_width):
         rng = default_rng()
@@ -115,10 +94,3 @@ class GridworldPlotter:
         ax.add_patch(patches.Rectangle((.6 + col, .6 + row), .1, .3, ec='k', fc='c'))
         ax.add_patch(patches.Rectangle((.32 + col, .25 + row), .1, .15, ec='k', fc='w'))
         ax.add_patch(patches.Rectangle((.57 + col, .25 + row), .1, .15, ec='k', fc='w'))
-
-    @staticmethod
-    def draw_goal(ax: mpl.axes.Axes, row: int, col: int):
-        ax.add_patch(patches.Rectangle((.3 + col, .5 + row), .07, .4, ec='k', fc='y'))
-        ax.add_patch(
-            patches.Polygon([(.3 + col, .15 + row), (.3 + col, .6 + row), (.7 + col, .35 + row)],
-                            closed=True, ec='k', fc='y'))
