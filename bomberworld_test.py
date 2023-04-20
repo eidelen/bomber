@@ -2,14 +2,14 @@ import math
 import unittest
 import numpy as np
 import bomberworld
-from bomberworld_plotter import GridworldPlotter
+from bomberworld_plotter import BomberworldPlotter
 
 class MyTestCase(unittest.TestCase):
 
     def test_valid_pos(self):
         # test function which checks if position is on the board
         size = 10
-        env = bomberworld.GridworldEnv(size, 100)
+        env = bomberworld.BomberworldEnv(size, 100)
         for m in range(0, size):
             for n in range(0, size):
                 self.assertTrue(env.is_valid_pos((m, n)))
@@ -23,7 +23,7 @@ class MyTestCase(unittest.TestCase):
     def test_can_move_to_pos(self):
         # test function which checks if position is on the board
         size = 10
-        env = bomberworld.GridworldEnv(size, 100)
+        env = bomberworld.BomberworldEnv(size, 100)
 
         # can move nowhere
         env.board = np.zeros(shape=(size, size), dtype=np.float32)
@@ -45,7 +45,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_bomb_3x3(self):
         size = 10
-        env = bomberworld.GridworldEnv(size, 100)
+        env = bomberworld.BomberworldEnv(size, 100)
 
         # bomb upper left corner
         env.board = np.zeros(shape=(size, size), dtype=np.float32)
@@ -69,7 +69,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_reset(self):
         size = 10
-        env = bomberworld.GridworldEnv(size, 100)
+        env = bomberworld.BomberworldEnv(size, 100)
         env.reset()
 
         # check that no stones around agent but everywhere else
@@ -87,7 +87,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_move_actions(self):
         size = 10
-        env = bomberworld.GridworldEnv(size, 100)
+        env = bomberworld.BomberworldEnv(size, 100)
         env.set_initial_board((0,0))
 
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
@@ -127,7 +127,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_bomb_actions(self):
         size = 10
-        env = bomberworld.GridworldEnv(size, 100)
+        env = bomberworld.BomberworldEnv(size, 100)
         env.set_initial_board((0, 0))
 
         obs, reward, _, _, _ = env.step(4)  # no rock bombed
@@ -143,7 +143,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_reach_target(self):
         size = 10
-        env = bomberworld.GridworldEnv(size, 100)
+        env = bomberworld.BomberworldEnv(size, 100)
         env.set_initial_board((0, 0))
 
         # destroy all rocks
@@ -161,7 +161,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_reach_max(self):
         size = 10
-        env = bomberworld.GridworldEnv(size, 100)
+        env = bomberworld.BomberworldEnv(size, 100)
         env.reset()
 
         for i in range(0, 101):
@@ -177,7 +177,7 @@ class MyTestCase(unittest.TestCase):
 
         reward = 0.0
         size = 10
-        env = bomberworld.GridworldEnv(size, 100)
+        env = bomberworld.BomberworldEnv(size, 100)
         env.set_initial_board((1, 1))
 
         for i in range(0, 7):

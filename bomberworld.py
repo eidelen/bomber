@@ -12,7 +12,7 @@ import copy
 # bombs necessary = 94 / 5 = 19 bombs
 # reward = 94 + 10 - 19 = about 85
 
-class GridworldEnv(gym.Env):
+class BomberworldEnv(gym.Env):
 
     def __init__(self, size: int, max_steps: int):
 

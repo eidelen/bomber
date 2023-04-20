@@ -1,17 +1,19 @@
+# do_bombing uses a checkpoint an runs a bomber game
+# Author: Adrian Schneider
 
 from ray.rllib.policy.policy import  Policy
 import argparse
 import bomberworld
-from bomberworld_plotter import GridworldPlotter
+from bomberworld_plotter import BomberworldPlotter
 
-def run_bombing(path_to_checkpoit: str):
+def run_bombing(path_to_checkpoint: str):
 
-    trained_policy = Policy.from_checkpoint(path_to_checkpoit)
+    trained_policy = Policy.from_checkpoint(path_to_checkpoint)
 
-    env = bomberworld.GridworldEnv(10, 100)
+    env = bomberworld.BomberworldEnv(10, 20)
     o, info = env.reset()
 
-    plotter = GridworldPlotter(size=env.size)
+    plotter = BomberworldPlotter(size=env.size, animated_gif_folder_path="gifs")
     plotter.add_frame(env.agent_pos, False, env.board)
 
     reward_sum = 0
@@ -19,14 +21,13 @@ def run_bombing(path_to_checkpoit: str):
     while not (terminated or truncated):
         a = trained_policy.compute_single_action(o)[0]
         o, r, terminated, truncated, info = env.step(a)
-        plotter.add_frame(env.agent_pos, a == 4, env.board)
         reward_sum += r
-        print(env.board)
+        plotter.add_frame(env.agent_pos, a == 4, env.board)
+        plotter.plot_episode(current_reward=reward_sum)
+        print("Current Reward:", reward_sum)
 
-        print("#################################################")
-
-    print(reward_sum)
-    plotter.plot_episode()
+    print("Overall Reward:", reward_sum)
+    plotter.create_animated_gif_from_episodes()
 
 
 if __name__ == '__main__':

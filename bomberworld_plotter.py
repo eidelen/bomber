@@ -2,26 +2,31 @@
 #
 # Produces nice images of the Bomberworld environment
 #
-# Author: Giacomo Del Rio and modified Adrian Schneider
+# Author: Giacomo Del Rio and extended by Adrian Schneider
 # Creation date: 09 April 2023
 
-import itertools
 from pathlib import Path
 from typing import Tuple, List, Union, Optional
-
+from PIL import Image
 import matplotlib as mpl
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.random import default_rng
 
+class BomberworldPlotter:
 
-class GridworldPlotter:
-
-    def __init__(self, size: int, walls: np.ndarray = None):
+    def __init__(self, size: int, animated_gif_folder_path: Optional[Union[str, Path]] = None):
+        """
+        size: grid size of the bomberworld
+        animated_gif_folder_path: if set, episodes are saved into this folder and
+                                  calling create_animated_gif_from_episodes creates
+                                  an animated gif of all saved episodes.
+        """
         self.size = size
-        self.walls = walls
-
+        self.animated_gif_folder = animated_gif_folder_path
+        self.current_episode_nbr = 0
+        self.ordered_file_list = []
         self.agent_traj: List[Tuple[int, int]] = []
         self.bomb_traj: List[Tuple[int, int]] = []
         self.stones: np.ndarray = np.zeros((self.size, self.size), dtype=np.float32)
@@ -35,7 +40,7 @@ class GridworldPlotter:
 
         self.stones = stones
 
-    def plot_episode(self, out_file: Optional[Union[str, Path]] = None):
+    def plot_episode(self, current_reward = None):
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=mpl.figure.figaspect(1))
 
         self.draw_grid(ax)
@@ -45,6 +50,9 @@ class GridworldPlotter:
         self.draw_bombs(ax, self.bomb_traj)
         self.draw_agent(ax, self.agent_traj[0][0], self.agent_traj[0][1])
 
+        if current_reward is not None:
+            ax.text(0.0, -1.0, f"Reward: {current_reward}")
+
         ax.set_xlim(0, self.size)
         ax.set_ylim(0, self.size)
 
@@ -52,8 +60,11 @@ class GridworldPlotter:
         ax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
         fig.tight_layout()
 
-        if out_file is not None:
+        if self.animated_gif_folder is not None:
+            out_file = f"{self.animated_gif_folder}/{self.current_episode_nbr}.png"
             fig.savefig(out_file, dpi=200, bbox_inches='tight')
+            self.ordered_file_list.append(out_file)
+            self.current_episode_nbr += 1
         else:
             plt.show()
 
@@ -62,7 +73,7 @@ class GridworldPlotter:
     @staticmethod
     def draw_path(ax: mpl.axes.Axes, path: List[Tuple[int, int]], color, line_width):
         rng = default_rng()
-        trj = [(c + rng.uniform(0.3, 0.7), r + rng.uniform(0.3, 0.7)) for r, c in path]
+        trj = [(c + rng.uniform(0.1, 0.4), r + rng.uniform(0.1, 0.4)) for r, c in path]
         ax.add_patch(patches.Polygon(trj, closed=False, ec=color, lw=line_width, fill=False))
 
     @staticmethod
@@ -94,3 +105,23 @@ class GridworldPlotter:
         ax.add_patch(patches.Rectangle((.6 + col, .6 + row), .1, .3, ec='k', fc='c'))
         ax.add_patch(patches.Rectangle((.32 + col, .25 + row), .1, .15, ec='k', fc='w'))
         ax.add_patch(patches.Rectangle((.57 + col, .25 + row), .1, .15, ec='k', fc='w'))
+
+    def create_animated_gif_from_episodes(self):
+        # creates animated gif
+        # from https://pythonprogramming.altervista.org/png-to-gif/
+
+        if self.animated_gif_folder is not None:
+            frames = []
+            for i in self.ordered_file_list:
+                new_frame = Image.open(i)
+                frames.append(new_frame)
+
+            gif_out_path = f"{self.animated_gif_folder}/episode.gif"
+            frames[0].save(gif_out_path, format='GIF',
+                           append_images=frames[1:],
+                           save_all=True,
+                           duration=300, loop=0)
+            print("Animated gif created, nbr imgs:", len(frames))
+        else:
+            print("Error: animated_gif_folder_path needs to be set in ctor")
+

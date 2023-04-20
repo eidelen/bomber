@@ -9,7 +9,7 @@ from ray.tune.stopper import MaximumIterationStopper
 import bomberworld
 
 def env_create(env_config: EnvContext):
-    return bomberworld.GridworldEnv(**env_config)
+    return bomberworld.BomberworldEnv(**env_config)
 
 def apply_ppo(gamma: float, nn_model: list, activation: str, desc: str):
     register_env("GridworldEnv", env_create)
@@ -18,7 +18,6 @@ def apply_ppo(gamma: float, nn_model: list, activation: str, desc: str):
     config = config.framework(framework='torch')
     config = config.resources(num_gpus=1)
     config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100})
-
 
     config.model['fcnet_hiddens'] = nn_model
     config.model['fcnet_activation'] = activation
