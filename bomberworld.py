@@ -89,6 +89,8 @@ class GridworldEnv(gym.Env):
                 self.board[self.agent_pos] = self.empty_val
                 self.agent_pos = next_pos
                 self.board[self.agent_pos] = self.agent_val
+
+                reward -= 0.2 # penalty for each move
             else:
                 reward -= 1.0
 

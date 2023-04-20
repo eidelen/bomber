@@ -11,23 +11,24 @@ import bomberworld
 def env_create(env_config: EnvContext):
     return bomberworld.GridworldEnv(**env_config)
 
-def apply_ppo(gamma: float, nn_model: list, activation: str):
+def apply_ppo(gamma: float, nn_model: list, activation: str, desc: str):
     register_env("GridworldEnv", env_create)
 
     config = PPOConfig()
     config = config.framework(framework='torch')
+    config = config.resources(num_gpus=1)
     config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100})
 
 
     config.model['fcnet_hiddens'] = nn_model
     config.model['fcnet_activation'] = activation
 
-    config = config.rollouts(num_rollout_workers=3)
+    config = config.rollouts(num_rollout_workers=11)
     config = config.training(gamma=gamma) # not below 0.7
     config = config.debugging(log_level="ERROR")
 
 
-    experiment_name = f"PPO_GRIDWORLD_{datetime.now():%H-%M}_GAMMA={gamma}_MODEL={nn_model}_ACT={activation}"
+    experiment_name = f"PPO_{desc}_{datetime.now():%H-%M}_GAMMA={gamma}_MODEL={nn_model}_ACT={activation}"
 
     tuner = Tuner(
         trainable=PPO,
@@ -36,8 +37,8 @@ def apply_ppo(gamma: float, nn_model: list, activation: str):
             name=experiment_name,
             local_dir="out",
             verbose=2,
-            stop=MaximumIterationStopper(10),
-            checkpoint_config=air.CheckpointConfig(checkpoint_frequency=50)
+            stop=MaximumIterationStopper(3000),
+            checkpoint_config=air.CheckpointConfig(checkpoint_frequency=100)
         )
     )
 
@@ -56,6 +57,6 @@ def resume_training():
 
 
 if __name__ == '__main__':
-    resume_training()
-    #apply_ppo(0.8, [256, 256, 128, 64], "relu")
+    #resume_training()
+    apply_ppo(0.8, [256, 256, 128, 64], "relu")
 

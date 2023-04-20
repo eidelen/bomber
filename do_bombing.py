@@ -4,13 +4,14 @@ import bomberworld
 from bomberworld_plotter import GridworldPlotter
 
 def run_bombing():
-    path_to_cp = "/Users/eidelen/dev/bomber/out/PPO_GRIDWORLD_15-52_GAMMA=0.8_MODEL=[256, 256, 128, 64]_ACT=relu/PPO_GridworldEnv_bdca0_00000_0_2023-04-15_15-52-20/checkpoint_000900/policies/default_policy"
+    path_to_cp = "C:\\Users\\admin\\dev\\bomber\\out\\PPO_movepenalty_16-21_GAMMA=0.8_MODEL=[512, 256, 128, 64]_ACT=relu\\PPO_GridworldEnv_237d7_00000_0_2023-04-17_16-21-26\\checkpoint_000700\\policies\\default_policy"
     trained_policy = Policy.from_checkpoint(path_to_cp)
 
     env = bomberworld.GridworldEnv(10, 100)
     o, info = env.reset()
 
     plotter = GridworldPlotter(size=env.size)
+    plotter.add_frame(env.agent_pos, False, env.board)
 
     reward_sum = 0
     terminated, truncated = False, False
