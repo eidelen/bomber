@@ -98,7 +98,7 @@ class MyTestCase(unittest.TestCase):
         self.assertAlmostEqual(reward, -1.0)
 
         obs, reward, _, _, _ = env.step(1)  # right possible
-        self.assertAlmostEqual(reward, 0.0)
+        self.assertAlmostEqual(reward, -0.2)
         self.assertEqual(env.agent_pos, (0,1))
 
         obs, reward, _, _, _ = env.step(1)  # right again not possible
@@ -106,7 +106,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(env.agent_pos, (0, 1))
 
         obs, reward, _, _, _ = env.step(2)  # down possible
-        self.assertAlmostEqual(reward, 0.0)
+        self.assertAlmostEqual(reward, -0.2)
         self.assertEqual(env.agent_pos, (1, 1))
 
         obs, reward, _, _, _ = env.step(2)  # down again not possible
@@ -114,7 +114,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(env.agent_pos, (1, 1))
 
         obs, reward, _, _, _ = env.step(3)  # left possible
-        self.assertAlmostEqual(reward, 0.0)
+        self.assertAlmostEqual(reward, -0.2)
         self.assertEqual(env.agent_pos, (1, 0))
 
         obs, reward, _, _, _ = env.step(3)  # left again not possible
@@ -122,7 +122,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(env.agent_pos, (1, 0))
 
         obs, reward, _, _, _ = env.step(0)  # up possible
-        self.assertAlmostEqual(reward, 0.0)
+        self.assertAlmostEqual(reward, -0.2)
         self.assertEqual(env.agent_pos, (0, 0))
 
     def test_bomb_actions(self):
@@ -152,7 +152,7 @@ class MyTestCase(unittest.TestCase):
         env.board[(0, 1)] = 0
 
         obs, reward, terminated, _, _ = env.step(2)  # down
-        self.assertAlmostEqual(reward, 0.0)
+        self.assertAlmostEqual(reward, -0.2)
         self.assertFalse(terminated)
 
         obs, reward, terminated, _, _ = env.step(4)  # bomb and all is destroyed
