@@ -319,7 +319,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_destructable_multiple_bombs(self):
         size = 10
-        env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
+        env = bomberworld.BomberworldEnv(size, 150, indestructible_agent=False)
         env.set_initial_board((1, 1))
 
         self.assertEqual(env.agent_pos, (1,1))
@@ -561,14 +561,82 @@ class MyTestCase(unittest.TestCase):
 
         self.assertAlmostEqual(65 * env.move_penalty + 19 * env.bomb_penalty + 75 * env.rock_reward, reward)
 
-        print(env.board)
+        _, r, _, _, _ = env.step(4)  # bomb
+        reward += r
+        _, r, _, _, _ = env.step(3)  # left
+        reward += r
+        _, r, _, _, _ = env.step(3)  # left
+        reward += r
+        _, r, _, _, _ = env.step(3)  # left
+        reward += r
+        _, r, _, _, _ = env.step(3)  # left
+        reward += r
+        _, r, _, _, _ = env.step(3)  # left
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(4)  # bomb
+        reward += r
+        _, r, _, _, _ = env.step(0)  # up
+        reward += r
+        _, r, _, _, _ = env.step(0)  # up
+        reward += r
 
-        # todo: continue
+        self.assertAlmostEqual(75 * env.move_penalty + 21 * env.bomb_penalty + 79 * env.rock_reward, reward)
 
+        _, r, _, _, _ = env.step(3)  # left
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(4)  # bomb
+        reward += r
+        _, r, _, _, _ = env.step(0)  # up
+        reward += r
+        _, r, _, _, _ = env.step(0)  # up
+        reward += r
+
+        self.assertAlmostEqual(81 * env.move_penalty + 22 * env.bomb_penalty + 84 * env.rock_reward, reward)
+
+        _, r, _, _, _ = env.step(3)  # left
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(4)  # bomb
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(4)  # bomb
+        reward += r
+        _, r, _, _, _ = env.step(1)  # right
+        reward += r
+        _, r, _, _, _ = env.step(1)  # right
+        reward += r
+
+        self.assertAlmostEqual(87 * env.move_penalty + 24 * env.bomb_penalty + 90 * env.rock_reward, reward)
+
+        _, r, terminated, _, _ = env.step(4)  # bomb
+        self.assertFalse(terminated)
+        reward += r
+        _, r, terminated, _, _ = env.step(1)  # right
+        reward += r
+        self.assertFalse(terminated)
+        _, r, terminated, _, _ = env.step(1)  # right
+        reward += r
+        self.assertTrue(terminated)
+
+        self.assertAlmostEqual(89 * env.move_penalty + 25 * env.bomb_penalty + 91 * env.rock_reward + env.end_game_reward, reward)
 
         print(reward)
-
-
 
 
 
