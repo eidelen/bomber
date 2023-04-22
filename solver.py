@@ -16,13 +16,14 @@ def apply_ppo(gamma: float, nn_model: list, activation: str, desc: str):
 
     config = PPOConfig()
     config = config.framework(framework='torch')
-    config = config.resources(num_gpus=1)
-    config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100})
+    #config = config.resources(num_gpus=1)
+    config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100, "indestructible_agent": False})
 
     config.model['fcnet_hiddens'] = nn_model
     config.model['fcnet_activation'] = activation
 
-    config = config.rollouts(num_rollout_workers=11)
+    #config = config.rollouts(num_rollout_workers=11)
+    config = config.rollouts(num_rollout_workers=3)
     config = config.training(gamma=gamma) # not below 0.7
     config = config.debugging(log_level="ERROR")
 
@@ -36,7 +37,7 @@ def apply_ppo(gamma: float, nn_model: list, activation: str, desc: str):
             name=experiment_name,
             local_dir="out",
             verbose=2,
-            stop=MaximumIterationStopper(3000),
+            stop=MaximumIterationStopper(2000),
             checkpoint_config=air.CheckpointConfig(checkpoint_frequency=100)
         )
     )
@@ -57,5 +58,5 @@ def resume_training():
 
 if __name__ == '__main__':
     #resume_training()
-    apply_ppo(0.8, [256, 256, 128, 64], "relu")
+    apply_ppo(0.8, [512, 256, 128, 64], "relu", "SuperBomber")
 
