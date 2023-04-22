@@ -93,6 +93,7 @@ class MyTestCase(unittest.TestCase):
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
         obs, reward, _, _, _ = env.step(0) # up not possible
         self.assertAlmostEqual(reward, -1.0)
+        self.assertAlmostEqual(env.board[(0,0)], env.agent_val)
 
         obs, reward, _, _, _ = env.step(3)  # left not possible
         self.assertAlmostEqual(reward, -1.0)
@@ -100,6 +101,8 @@ class MyTestCase(unittest.TestCase):
         obs, reward, _, _, _ = env.step(1)  # right possible
         self.assertAlmostEqual(reward, -0.2)
         self.assertEqual(env.agent_pos, (0,1))
+        self.assertAlmostEqual(env.board[(0, 0)], env.empty_val) # previous field empty
+        self.assertAlmostEqual(env.board[(0, 1)], env.agent_val) # current field agent
 
         obs, reward, _, _, _ = env.step(1)  # right again not possible
         self.assertAlmostEqual(reward, -1.0)
@@ -108,6 +111,8 @@ class MyTestCase(unittest.TestCase):
         obs, reward, _, _, _ = env.step(2)  # down possible
         self.assertAlmostEqual(reward, -0.2)
         self.assertEqual(env.agent_pos, (1, 1))
+        self.assertAlmostEqual(env.board[(0, 1)], env.empty_val)  # previous field empty
+        self.assertAlmostEqual(env.board[(1, 1)], env.agent_val)  # current field agent
 
         obs, reward, _, _, _ = env.step(2)  # down again not possible
         self.assertAlmostEqual(reward, -1.0)
@@ -132,6 +137,7 @@ class MyTestCase(unittest.TestCase):
 
         obs, reward, _, _, _ = env.step(4)  # no rock bombed
         self.assertAlmostEqual(reward, -1.0)
+        self.assertAlmostEqual(env.board[(0, 0)], env.agent_val)
 
         obs, reward, _, _, _ = env.step(1) # move to (0,1)
         obs, reward, _, _, _ = env.step(4)  # 2 rocks bombed
@@ -146,10 +152,10 @@ class MyTestCase(unittest.TestCase):
         env = bomberworld.BomberworldEnv(size, 100)
         env.set_initial_board((0, 0))
 
-        # destroy all rocks
-        env.board.fill(128)
-        env.board[(0, 0)] = 255
-        env.board[(0, 1)] = 0
+        # destroy all rocks except one
+        env.board.fill(env.empty_val)
+        env.board[(0, 0)] = env.agent_val
+        env.board[(0, 1)] = env.rock_val
 
         obs, reward, terminated, _, _ = env.step(2)  # down
         self.assertAlmostEqual(reward, -0.2)
@@ -174,7 +180,6 @@ class MyTestCase(unittest.TestCase):
         self.assertFalse(terminated)
 
     def test_good_run(self):
-
         reward = 0.0
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
@@ -227,49 +232,111 @@ class MyTestCase(unittest.TestCase):
         print(reward)
 
 
+    def test_destructable_agent(self):
+        size = 10
+        env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
+        env.set_initial_board((1, 1))
+
+        _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay there at detonation
+        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        _, r, _, _, _ = env.step(0)  # up
+        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        _, r, _, _, _ = env.step(2)  # down and bomb detonates
+        self.assertEqual(env.agent_pos, (1,1))
+        self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
+        self.assertEqual(len(env.active_bombs), 0)
+
+        _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay (0,0) at detonation
+        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        _, r, _, _, _ = env.step(0)  # up
+        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        _, r, _, _, _ = env.step(3)  # left and bomb detonates
+        self.assertEqual(env.agent_pos, (0, 0))
+        self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
+        self.assertEqual(len(env.active_bombs), 0)
+
+        env.step(2)
+        env.step(1)
+        _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay (2,2) at detonation
+        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        _, r, _, _, _ = env.step(2)  # down
+        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        _, r, _, _, _ = env.step(1)  # right and bomb detonates
+        self.assertEqual(env.agent_pos, (2, 2))
+        self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
+        self.assertEqual(len(env.active_bombs), 0)
+
+        # drop bomb at (2,2) and go to safe place (0,2)
+        _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay (2,2) at detonation
+        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        _, r, _, _, _ = env.step(0)  # up
+        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        _, r, _, _, _ = env.step(0)  # up
+        self.assertEqual(env.agent_pos, (0, 2))
+        self.assertAlmostEqual(r, env.move_penalty + 5 * env.rock_reward)
+        self.assertEqual(len(env.active_bombs), 0)
 
 
+    def test_if_bomb_on_field(self):
+        size = 10
+        env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
+        env.set_initial_board((1, 1))
+        env.step(4)
+        self.assertTrue(env.is_active_bomb_on_field((1,1)))
+        self.assertFalse(env.is_active_bomb_on_field((0, 1)))
+        self.assertFalse(env.is_active_bomb_on_field((0, 0)))
+        self.assertFalse(env.is_active_bomb_on_field((1, 0)))
+        self.assertFalse(env.is_active_bomb_on_field((2, 2)))
+        self.assertFalse(env.is_active_bomb_on_field((2, 1)))
 
 
-        # plotter = GridworldPlotter(size=env.size, goal_pos=env.goal_pos)
-        #
-        # s = [1, 2, 1, 2]
-        # for a in s:
-        #     env.step(a)
-        #     plotter.add_frame(env.agent_pos)
-        #
-        # plotter.plot_episode()
-        #
-        # env.agent_pos = (0, 0)
-        #
-        # # hit upper border
-        # o, reward, terminated, truncate, info = env.step(0)
-        # self.assertAlmostEqual(-1.1, reward, 0.00001)
-        # self.assertEqual(env.agent_pos, (0, 0))
+    def test_destructable_obs_bombs(self):
+        size = 10
+        env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
+        env.set_initial_board((1, 1))
 
+        self.assertEqual(env.agent_pos, (1,1))
+        env.step(4) # drop bomb, agent and bomb in same spot
+        self.assertAlmostEqual(env.board[(1,1)], env.bomb_and_agent_val )
 
-    # def test_use_trained_net(self):
-    #     from ray.rllib.policy.policy import  Policy
-    #
-    #     trained_policy = Policy.from_checkpoint("/Users/eidelen/dev/CASLive/out/PPO_GRIDWORLD_2023-04-05_16-01-38/PPO_GridworldEnv_64017_00000_0_2023-04-05_16-01-41/checkpoint_000800/policies/default_policy")
-    #
-    #     env = gridworld.GridworldEnv(10, 100)
-    #     o, info = env.reset()
-    #
-    #     plotter = GridworldPlotter(size=env.size, goal_pos=env.goal_pos)
-    #
-    #     reward_sum = 0
-    #     terminated, truncated = False, False
-    #     while not (terminated or truncated):
-    #         a = trained_policy.compute_single_action(o)[0]
-    #         o, r, terminated, truncated, info = env.step(a)
-    #         plotter.add_frame(env.agent_pos)
-    #         reward_sum += r
-    #
-    #     print(reward_sum)
-    #     plotter.plot_episode()
+        env.step(0)  # up, agent at (0,1) and bomb at (1,1)
+        self.assertEqual(env.agent_pos, (0, 1))
+        self.assertAlmostEqual(env.board[(1, 1)], env.bomb_val)
+        self.assertAlmostEqual(env.board[(0, 1)], env.agent_val)
 
+        env.step(2)  # down, agent at (1,1) and bomb detonates at (1,1)
+        self.assertEqual(env.agent_pos, (1, 1))
+        self.assertAlmostEqual(env.board[(0, 1)], env.empty_val)
+        self.assertAlmostEqual(env.board[(1, 1)], env.agent_val)
 
+    def test_destructable_multiple_bombs(self):
+        size = 10
+        env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
+        env.set_initial_board((1, 1))
+
+        self.assertEqual(env.agent_pos, (1,1))
+        env.step(4) # drop bomb, agent and bomb in same spot
+        self.assertAlmostEqual(env.board[(1,1)], env.bomb_and_agent_val )
+        self.assertEqual(len(env.active_bombs), 1)
+        env.step(4)
+        self.assertAlmostEqual(env.board[(1, 1)], env.bomb_and_agent_val)
+        self.assertEqual(len(env.active_bombs), 2)
+
+        env.step(0) # up
+        self.assertAlmostEqual(env.board[(1, 1)], env.bomb_val)
+        self.assertEqual(len(env.active_bombs), 1) # first bomb detonated
+
+        env.step(1)  # right
+        self.assertAlmostEqual(env.board[(1, 1)], env.empty_val)
+        self.assertEqual(len(env.active_bombs), 0)  # first bomb detonated
 
 if __name__ == '__main__':
     unittest.main()
