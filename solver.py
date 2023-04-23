@@ -17,7 +17,7 @@ def apply_ppo(gamma: float, nn_model: list, activation: str, desc: str):
     config = PPOConfig()
     config = config.framework(framework='torch')
     #config = config.resources(num_gpus=1)
-    config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100, "indestructible_agent": False})
+    config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100, "indestructible_agent": True})
 
     config.model['fcnet_hiddens'] = nn_model
     config.model['fcnet_activation'] = activation
@@ -58,5 +58,5 @@ def resume_training():
 
 if __name__ == '__main__':
     #resume_training()
-    apply_ppo(0.8, [512, 256, 128, 64], "relu", "SuperBomber")
+    apply_ppo(0.8, [512, 256, 128, 64], "relu", "test-refactor")
 

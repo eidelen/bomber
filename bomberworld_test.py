@@ -26,13 +26,13 @@ class MyTestCase(unittest.TestCase):
         env = bomberworld.BomberworldEnv(size, 100)
 
         # can move nowhere
-        env.board = np.zeros(shape=(size, size), dtype=np.float32)
+        env.stones = np.full((size, size), True)
         for m in range(-1, size+1):
             for n in range(-1, size+1):
                 self.assertFalse(env.can_move_to_pos((m, n)))
 
         # can move everywhere
-        env.board = np.ones(shape=(size, size), dtype=np.float32)
+        env.stones = np.full((size, size), False)
         for m in range(0, size):
             for n in range(0, size):
                 self.assertTrue(env.can_move_to_pos((m, n)))
@@ -48,24 +48,24 @@ class MyTestCase(unittest.TestCase):
         env = bomberworld.BomberworldEnv(size, 100)
 
         # bomb upper left corner
-        env.board = np.zeros(shape=(size, size), dtype=np.float32)
+        env.stones = np.full((size, size), True)
         self.assertEqual(env.bomb_3x3((0,0)), 4)
         for m in range(0, size):
             for n in range(0, size):
                 if m < 2 and n < 2:
-                    self.assertAlmostEqual(env.board[(m,n)], env.empty_val)
+                    self.assertFalse(env.stones[(m,n)])
                 else:
-                    self.assertAlmostEqual(env.board[(m,n)], env.rock_val)
+                    self.assertTrue(env.stones[(m,n)])
 
         # bomb 1, 1
-        env.board = np.zeros(shape=(size, size), dtype=np.float32)
+        env.stones = np.full((size, size), True)
         self.assertEqual(env.bomb_3x3((1, 1)), 9)
         for m in range(0, size):
             for n in range(0, size):
                 if m < 3 and n < 3:
-                    self.assertAlmostEqual(env.board[(m, n)], env.empty_val)
+                    self.assertFalse(env.stones[(m, n)])
                 else:
-                    self.assertAlmostEqual(env.board[(m, n)], env.rock_val)
+                    self.assertTrue(env.stones[(m, n)])
 
     def test_reset(self):
         size = 10
@@ -73,17 +73,20 @@ class MyTestCase(unittest.TestCase):
         env.reset()
 
         # check that no stones around agent but everywhere else
+        board = env.make_observation_2D()
         a_m, a_n = env.agent_pos
         for m in range(0, size):
             for n in range(0, size):
                 l2_dist_to_agent = math.sqrt((a_m - m)**2 + (a_n - n)**2)
                 if l2_dist_to_agent < 1.0:
-                    self.assertAlmostEqual(env.board[(m, n)], env.agent_val)
+                    self.assertAlmostEqual(board[(m, n)], env.agent_val)
+                    self.assertFalse(env.stones[(m, n)])
                 elif l2_dist_to_agent < 2.0:
-                    self.assertAlmostEqual(env.board[(m, n)], env.empty_val)
+                    self.assertAlmostEqual(board[(m, n)], env.empty_val)
+                    self.assertFalse(env.stones[(m, n)])
                 else:
-                    self.assertAlmostEqual(env.board[(m, n)], env.rock_val)
-
+                    self.assertAlmostEqual(board[(m, n)], env.rock_val)
+                    self.assertTrue(env.stones[(m, n)])
 
     def test_move_actions(self):
         size = 10
@@ -93,7 +96,7 @@ class MyTestCase(unittest.TestCase):
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
         obs, reward, _, _, _ = env.step(0) # up not possible
         self.assertAlmostEqual(reward, -1.0)
-        self.assertAlmostEqual(env.board[(0,0)], env.agent_val)
+        self.assertAlmostEqual(env.make_observation_2D()[(0,0)], env.agent_val)
 
         obs, reward, _, _, _ = env.step(3)  # left not possible
         self.assertAlmostEqual(reward, -1.0)
@@ -101,8 +104,8 @@ class MyTestCase(unittest.TestCase):
         obs, reward, _, _, _ = env.step(1)  # right possible
         self.assertAlmostEqual(reward, -0.2)
         self.assertEqual(env.agent_pos, (0,1))
-        self.assertAlmostEqual(env.board[(0, 0)], env.empty_val) # previous field empty
-        self.assertAlmostEqual(env.board[(0, 1)], env.agent_val) # current field agent
+        self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.empty_val) # previous field empty
+        self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.agent_val) # current field agent
 
         obs, reward, _, _, _ = env.step(1)  # right again not possible
         self.assertAlmostEqual(reward, -1.0)
@@ -111,8 +114,8 @@ class MyTestCase(unittest.TestCase):
         obs, reward, _, _, _ = env.step(2)  # down possible
         self.assertAlmostEqual(reward, -0.2)
         self.assertEqual(env.agent_pos, (1, 1))
-        self.assertAlmostEqual(env.board[(0, 1)], env.empty_val)  # previous field empty
-        self.assertAlmostEqual(env.board[(1, 1)], env.agent_val)  # current field agent
+        self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.empty_val)  # previous field empty
+        self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.agent_val)  # current field agent
 
         obs, reward, _, _, _ = env.step(2)  # down again not possible
         self.assertAlmostEqual(reward, -1.0)
@@ -137,7 +140,7 @@ class MyTestCase(unittest.TestCase):
 
         obs, reward, _, _, _ = env.step(4)  # no rock bombed
         self.assertAlmostEqual(reward, -1.0)
-        self.assertAlmostEqual(env.board[(0, 0)], env.agent_val)
+        self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.agent_val)
 
         obs, reward, _, _, _ = env.step(1) # move to (0,1)
         obs, reward, _, _, _ = env.step(4)  # 2 rocks bombed
@@ -153,16 +156,15 @@ class MyTestCase(unittest.TestCase):
         env.set_initial_board((0, 0))
 
         # destroy all rocks except one
-        env.board.fill(env.empty_val)
-        env.board[(0, 0)] = env.agent_val
-        env.board[(0, 1)] = env.rock_val
+        env.stones.fill(False)
+        env.stones[(0, 1)] = True
 
         obs, reward, terminated, _, _ = env.step(2)  # down
-        self.assertAlmostEqual(reward, -0.2)
+        self.assertAlmostEqual(reward, env.move_penalty)
         self.assertFalse(terminated)
 
         obs, reward, terminated, _, _ = env.step(4)  # bomb and all is destroyed
-        self.assertAlmostEqual(reward, 10.0)
+        self.assertAlmostEqual(reward, env.end_game_reward)
         self.assertTrue(terminated)
 
     def test_reach_max(self):
@@ -305,17 +307,17 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(env.agent_pos, (1,1))
         env.step(4) # drop bomb, agent and bomb in same spot
-        self.assertAlmostEqual(env.board[(1,1)], env.bomb_and_agent_val )
+        self.assertAlmostEqual(env.make_observation_2D()[(1,1)], env.bomb_and_agent_val )
 
         env.step(0)  # up, agent at (0,1) and bomb at (1,1)
         self.assertEqual(env.agent_pos, (0, 1))
-        self.assertAlmostEqual(env.board[(1, 1)], env.bomb_val)
-        self.assertAlmostEqual(env.board[(0, 1)], env.agent_val)
+        self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.bomb_val)
+        self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.agent_val)
 
         env.step(2)  # down, agent at (1,1) and bomb detonates at (1,1)
         self.assertEqual(env.agent_pos, (1, 1))
-        self.assertAlmostEqual(env.board[(0, 1)], env.empty_val)
-        self.assertAlmostEqual(env.board[(1, 1)], env.agent_val)
+        self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.empty_val)
+        self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.agent_val)
 
     def test_destructable_multiple_bombs(self):
         size = 10
@@ -324,18 +326,18 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(env.agent_pos, (1,1))
         env.step(4) # drop bomb, agent and bomb in same spot
-        self.assertAlmostEqual(env.board[(1,1)], env.bomb_and_agent_val )
+        self.assertAlmostEqual(env.make_observation_2D()[(1,1)], env.bomb_and_agent_val )
         self.assertEqual(len(env.active_bombs), 1)
         env.step(4)
-        self.assertAlmostEqual(env.board[(1, 1)], env.bomb_and_agent_val)
+        self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.bomb_and_agent_val)
         self.assertEqual(len(env.active_bombs), 2)
 
         env.step(0) # up
-        self.assertAlmostEqual(env.board[(1, 1)], env.bomb_val)
+        self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.bomb_val)
         self.assertEqual(len(env.active_bombs), 1) # first bomb detonated
 
         env.step(1)  # right
-        self.assertAlmostEqual(env.board[(1, 1)], env.empty_val)
+        self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.empty_val)
         self.assertEqual(len(env.active_bombs), 0)  # first bomb detonated
 
     def test_destructable_good_run(self):
