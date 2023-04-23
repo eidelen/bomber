@@ -1,0 +1,25 @@
+name: bomber pipeline
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-22.04
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.9]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies with pip
+      run: |
+        python --version
+    - name: Run unit tests
+      run: |
+        python -m unittest discover
