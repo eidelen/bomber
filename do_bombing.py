@@ -13,8 +13,8 @@ def run_bombing(path_to_checkpoint: str):
     env = bomberworld.BomberworldEnv(10, 20)
     o, info = env.reset()
 
-    plotter = BomberworldPlotter(size=env.size, animated_gif_folder_path="gifs")
-    plotter.add_frame(env.agent_pos, False, env.board)
+    plotter = BomberworldPlotter(size=env.size) #, animated_gif_folder_path="gifs")
+    plotter.add_frame(env.agent_pos, False, env.make_observation_2D())
 
     reward_sum = 0
     terminated, truncated = False, False
@@ -22,7 +22,7 @@ def run_bombing(path_to_checkpoint: str):
         a = trained_policy.compute_single_action(o)[0]
         o, r, terminated, truncated, info = env.step(a)
         reward_sum += r
-        plotter.add_frame(env.agent_pos, a == 4, env.board)
+        plotter.add_frame(env.agent_pos, a == 4, env.make_observation_2D())
         plotter.plot_episode(current_reward=reward_sum)
         print("Current Reward:", reward_sum)
 
