@@ -8,7 +8,7 @@ import gymnasium as gym
 import numpy as np
 import copy
 
-# Best performance when size = 10 and no penalty on moving and being close to bomb
+# Best performance when size = 10 and no penalty on moving and allowed being close to bomb
 # 10 x 10 = 100 stones - 6 = 94
 # bombs necessary = 94 / 5 = 19 bombs
 # reward = 94 + 10 - 19 = about 85

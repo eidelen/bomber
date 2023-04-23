@@ -119,42 +119,42 @@ class MyTestCase(unittest.TestCase):
 
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
         obs, reward, _, _, _ = env.step(0) # up not possible
-        self.assertAlmostEqual(reward, -1.0)
+        self.assertAlmostEqual(reward, env.collision_penalty)
         self.assertAlmostEqual(env.make_observation_2D()[(0,0)], env.agent_val)
 
         obs, reward, _, _, _ = env.step(3)  # left not possible
-        self.assertAlmostEqual(reward, -1.0)
+        self.assertAlmostEqual(reward, env.collision_penalty)
 
         obs, reward, _, _, _ = env.step(1)  # right possible
-        self.assertAlmostEqual(reward, -0.2)
+        self.assertAlmostEqual(reward, env.move_penalty)
         self.assertEqual(env.agent_pos, (0,1))
         self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.empty_val) # previous field empty
         self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.agent_val) # current field agent
 
         obs, reward, _, _, _ = env.step(1)  # right again not possible
-        self.assertAlmostEqual(reward, -1.0)
+        self.assertAlmostEqual(reward, env.collision_penalty)
         self.assertEqual(env.agent_pos, (0, 1))
 
         obs, reward, _, _, _ = env.step(2)  # down possible
-        self.assertAlmostEqual(reward, -0.2)
+        self.assertAlmostEqual(reward, env.move_penalty)
         self.assertEqual(env.agent_pos, (1, 1))
         self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.empty_val)  # previous field empty
         self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.agent_val)  # current field agent
 
         obs, reward, _, _, _ = env.step(2)  # down again not possible
-        self.assertAlmostEqual(reward, -1.0)
+        self.assertAlmostEqual(reward, env.collision_penalty)
         self.assertEqual(env.agent_pos, (1, 1))
 
         obs, reward, _, _, _ = env.step(3)  # left possible
-        self.assertAlmostEqual(reward, -0.2)
+        self.assertAlmostEqual(reward, env.move_penalty)
         self.assertEqual(env.agent_pos, (1, 0))
 
         obs, reward, _, _, _ = env.step(3)  # left again not possible
-        self.assertAlmostEqual(reward, -1.0)
+        self.assertAlmostEqual(reward, env.collision_penalty)
         self.assertEqual(env.agent_pos, (1, 0))
 
         obs, reward, _, _, _ = env.step(0)  # up possible
-        self.assertAlmostEqual(reward, -0.2)
+        self.assertAlmostEqual(reward, env.move_penalty)
         self.assertEqual(env.agent_pos, (0, 0))
 
     def test_bomb_actions(self):
@@ -163,16 +163,16 @@ class MyTestCase(unittest.TestCase):
         env.set_initial_board((0, 0))
 
         obs, reward, _, _, _ = env.step(4)  # no rock bombed
-        self.assertAlmostEqual(reward, -1.0)
+        self.assertAlmostEqual(reward, env.bomb_penalty)
         self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.agent_val)
 
         obs, reward, _, _, _ = env.step(1) # move to (0,1)
         obs, reward, _, _, _ = env.step(4)  # 2 rocks bombed
-        self.assertAlmostEqual(reward, 1.0)
+        self.assertAlmostEqual(reward, env.bomb_penalty+2*env.rock_reward)
 
         obs, reward, _, _, _ = env.step(2)  # move to (1,1)
         obs, reward, _, _, _ = env.step(4)  # 3 rocks bombed
-        self.assertAlmostEqual(reward, 2.0)
+        self.assertAlmostEqual(reward, env.bomb_penalty+3*env.rock_reward)
 
     def test_reach_target(self):
         size = 10
