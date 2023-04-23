@@ -1,5 +1,5 @@
 # do_bombing uses a checkpoint an runs a bomber game
-# Author: Adrian Schneider
+# Author: Adrian Schneider, armasuisse
 
 from ray.rllib.policy.policy import  Policy
 import argparse

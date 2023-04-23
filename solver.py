@@ -1,3 +1,6 @@
+# Author: Adrian Schneider, armasuisse
+# Note: Initial copied from Giacomo Del Rio, IDSIA
+
 from datetime import datetime
 
 from ray import air

@@ -6,6 +6,30 @@ from bomberworld_plotter import BomberworldPlotter
 
 class MyTestCase(unittest.TestCase):
 
+    def test_ctor(self):
+        size = 10
+        maxst = 100
+        indestr = False
+        movep = -0.1
+        collip = -0.2
+        bombp = -0.3
+        closep = -0.4
+        rockr = 0.5
+        endr = 0.6
+
+        env = bomberworld.BomberworldEnv(size, maxst, indestructible_agent=indestr, move_penalty=movep, collision_penalty=collip,
+                 bomb_penalty=bombp, close_bomb_penalty=closep, rock_reward=rockr, end_game_reward=endr)
+
+        self.assertEqual(env.size, size)
+        self.assertEqual(env.max_steps, maxst)
+        self.assertEqual(env.indestructible_agent, indestr)
+        self.assertAlmostEqual(env.move_penalty, movep)
+        self.assertAlmostEqual(env.collision_penalty, collip)
+        self.assertAlmostEqual(env.bomb_penalty, bombp)
+        self.assertAlmostEqual(env.close_bomb_penalty, closep)
+        self.assertAlmostEqual(env.rock_reward, rockr)
+        self.assertAlmostEqual(env.end_game_reward, endr)
+
     def test_valid_pos(self):
         # test function which checks if position is on the board
         size = 10
