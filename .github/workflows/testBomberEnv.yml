@@ -20,6 +20,12 @@ jobs:
     - name: Install dependencies with pip
       run: |
         python --version
+        python -m pip install -U pip
+        python -m pip install -U setuptools
+        pip install torch torchvision
+        pip install -U "ray[rllib]"
+        pip install tqdm tensorboard matplotlib
+        
     - name: Run unit tests
       run: |
         python -m unittest discover
