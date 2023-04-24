@@ -1,5 +1,6 @@
 # bomberworld.py
-# Initial copied from Giacomo Del Rio, IDSIA
+# Author: Adrian Schneider, armasuisse
+# Note: Initial copied from Giacomo Del Rio, IDSIA
 
 from typing import Optional, Tuple
 
@@ -7,14 +8,15 @@ import gymnasium as gym
 import numpy as np
 import copy
 
-# Best performance when size = 10 and no penalty on moving and being close to bomb
+# Best performance when size = 10 and no penalty on moving and allowed being close to bomb
 # 10 x 10 = 100 stones - 6 = 94
 # bombs necessary = 94 / 5 = 19 bombs
 # reward = 94 + 10 - 19 = about 85
 
 class BomberworldEnv(gym.Env):
 
-    def __init__(self, size: int, max_steps: int, indestructible_agent=True):
+    def __init__(self, size: int, max_steps: int, indestructible_agent=True, move_penalty=-0.2, collision_penalty=-1.0,
+                 bomb_penalty=-1.0, close_bomb_penalty=-2.0, rock_reward=1.0, end_game_reward=10.0 ):
         """
         Parameters
         ----------
@@ -22,8 +24,8 @@ class BomberworldEnv(gym.Env):
         max_steps: Max steps in one game
         indestructible_agent: If True, bomb explodes immediately and agent is indestructible by own bomb.
                               If False, bomb explodes 2 steps later and agent needs to be in safe distance.
+        reward / penalty: Several reward and penalty options.
         """
-
 
         # settings
         self.rock_val = 0.0
@@ -32,12 +34,12 @@ class BomberworldEnv(gym.Env):
         self.bomb_and_agent_val = 0.75
         self.empty_val = 0.5
 
-        self.move_penalty = -0.2
-        self.collision_penalty = -1.0
-        self.bomb_penalty = -1.0
-        self.close_bomb_penalty = -2.0
-        self.rock_reward = 1.0
-        self.end_game_reward = 10.0
+        self.move_penalty = move_penalty
+        self.collision_penalty = collision_penalty
+        self.bomb_penalty = bomb_penalty
+        self.close_bomb_penalty = close_bomb_penalty
+        self.rock_reward = rock_reward
+        self.end_game_reward = end_game_reward
 
         self.size = size
         self.max_steps = max_steps
