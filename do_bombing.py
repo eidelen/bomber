@@ -10,10 +10,10 @@ def run_bombing(path_to_checkpoint: str):
 
     trained_policy = Policy.from_checkpoint(path_to_checkpoint)
 
-    env = bomberworld.BomberworldEnv(10, 20)
+    env = bomberworld.BomberworldEnv(10, 100)
     o, info = env.reset()
 
-    plotter = BomberworldPlotter(size=env.size) #, animated_gif_folder_path="gifs")
+    plotter = BomberworldPlotter(size=env.size, animated_gif_folder_path="gifs")
     plotter.add_frame(env.agent_pos, False, env.make_observation_2D())
 
     reward_sum = 0
