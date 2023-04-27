@@ -67,7 +67,7 @@ def grid_search_hypers():
     config = config.framework(framework='torch')
     config = config.resources(num_gpus=1)
     config = config.environment(env="GridworldEnv",
-                                env_config={"size": 10, "max_steps": 100, "indestructible_agent": False, "close_bomb_penalty": 0.0})
+                                env_config={"size": 10, "max_steps": 100, "indestructible_agent": False, "close_bomb_penalty": -0.5})
 
     config.model['fcnet_hiddens'] = [512, 256, 128, 64]
     config.model['fcnet_activation'] = "relu"
@@ -76,12 +76,12 @@ def grid_search_hypers():
 
     config = config.rollouts(num_rollout_workers=11)
     # config = config.rollouts(num_rollout_workers=3)
-    # config = config.training( lr=ray.tune.grid_search([0.001, 0.0001, 0.00001]), gamma=ray.tune.grid_search([0.99, 0.95, 0.90]), lambda_=ray.tune.grid_search([1.0, 0.95, 0.90]))
-    config = config.training(gamma=ray.tune.grid_search([0.99, 0.95, 0.90, 0.85]) )
+    config = config.training( lr=ray.tune.grid_search([5e-05, 0.0001, 0.00001]), gamma=ray.tune.grid_search([0.85, 0.80, 0.75]), lambda_=ray.tune.grid_search([1.0, 0.997, 0.95]))
+    #config = config.training(gamma=ray.tune.grid_search([0.99, 0.95, 0.90, 0.85]) )
 
     config = config.debugging(log_level="ERROR")
 
-    experiment_name = f"PPO_Hypersearch_cbp=0.0_{datetime.now():%H-%M}"
+    experiment_name = f"PPO_Hypersearch_cbp=0.5_{datetime.now():%H-%M}"
 
     tuner = Tuner(
         trainable=PPO,
@@ -90,7 +90,7 @@ def grid_search_hypers():
             name=experiment_name,
             local_dir="out",
             verbose=2,
-            stop=MaximumIterationStopper(100),
+            stop=MaximumIterationStopper(2000),
             checkpoint_config=air.CheckpointConfig(checkpoint_frequency=100)
         )
     )
