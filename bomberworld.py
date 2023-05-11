@@ -53,6 +53,10 @@ class BomberworldEnv(gym.Env):
         self.observation_space = gym.spaces.Box(low=0, high=1, shape=(size * size,), dtype=np.float32)
         self.action_space = gym.spaces.Discrete(5)
 
+        # print info
+        print("Simple Bomber World") if self.indestructible_agent else print("Complex Bomber World")
+
+
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[np.ndarray, dict]:
         super().reset(seed=seed)
         self.current_step = 0

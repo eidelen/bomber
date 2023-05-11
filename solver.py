@@ -15,35 +15,34 @@ import bomberworld
 def env_create(env_config: EnvContext):
     return bomberworld.BomberworldEnv(**env_config)
 
-
 def print_ppo_configs(config):
     print("clip_param", config.clip_param)
     print("gamma", config.gamma)
     print("lr", config.lr)
     print("lamda", config.lambda_)
 
-def apply_ppo(gamma: float, nn_model: list, activation: str, desc: str):
+def grid_search_hypers(env_params: dict, nn_model: list, activation: str, desc: str, train_hw: dict):
     register_env("GridworldEnv", env_create)
 
     config = PPOConfig()
+
+    print("Standard PPO Config:")
+    print_ppo_configs(config)
+
     config = config.framework(framework='torch')
-    config = config.resources(num_gpus=1)
-    config = config.environment(env="GridworldEnv", env_config={"size": 10, "max_steps": 100, "indestructible_agent": False})
+    config = config.resources(num_gpus=train_hw["gpu"])
+    config = config.environment(env="GridworldEnv",
+                                env_config=env_params)
 
     config.model['fcnet_hiddens'] = nn_model
     config.model['fcnet_activation'] = activation
 
-    print_ppo_configs(config)
+    config = config.rollouts(num_rollout_workers=train_hw["cpu"])
+    config = config.training( lr=ray.tune.grid_search([5e-05, 4e-05])) #, gamma=ray.tune.grid_search([0.99])) , lambda_=ray.tune.grid_search([1.0, 0.997, 0.95]))
 
-    config = config.rollouts(num_rollout_workers=11)
-    #config = config.rollouts(num_rollout_workers=3)
-    config = config.training(
-        gamma=gamma
-    ) # not below 0.7
     config = config.debugging(log_level="ERROR")
 
-
-    experiment_name = f"PPO_{desc}_{datetime.now():%H-%M}_GAMMA={gamma}_MODEL={nn_model}_ACT={activation}"
+    experiment_name = f"PPO_{desc}_{datetime.now():%H-%M}_MODEL={nn_model}_ACT={activation}"
 
     tuner = Tuner(
         trainable=PPO,
@@ -52,45 +51,7 @@ def apply_ppo(gamma: float, nn_model: list, activation: str, desc: str):
             name=experiment_name,
             local_dir="out",
             verbose=2,
-            stop=MaximumIterationStopper(500),
-            checkpoint_config=air.CheckpointConfig(checkpoint_frequency=100)
-        )
-    )
-
-    tuner.fit()
-
-
-def grid_search_hypers():
-    register_env("GridworldEnv", env_create)
-
-    config = PPOConfig()
-    config = config.framework(framework='torch')
-    config = config.resources(num_gpus=1)
-    config = config.environment(env="GridworldEnv",
-                                env_config={"size": 10, "max_steps": 100, "indestructible_agent": False, "close_bomb_penalty": -0.5})
-
-    config.model['fcnet_hiddens'] = [512, 256, 128, 64]
-    config.model['fcnet_activation'] = "relu"
-
-    print_ppo_configs(config)
-
-    config = config.rollouts(num_rollout_workers=11)
-    # config = config.rollouts(num_rollout_workers=3)
-    config = config.training( lr=ray.tune.grid_search([5e-05, 0.0001, 0.00001]), gamma=ray.tune.grid_search([0.85, 0.80, 0.75]), lambda_=ray.tune.grid_search([1.0, 0.997, 0.95]))
-    #config = config.training(gamma=ray.tune.grid_search([0.99, 0.95, 0.90, 0.85]) )
-
-    config = config.debugging(log_level="ERROR")
-
-    experiment_name = f"PPO_Hypersearch_cbp=0.5_{datetime.now():%H-%M}"
-
-    tuner = Tuner(
-        trainable=PPO,
-        param_space=config.to_dict(),
-        run_config=air.RunConfig(
-            name=experiment_name,
-            local_dir="out",
-            verbose=2,
-            stop=MaximumIterationStopper(2000),
+            stop=MaximumIterationStopper(300),
             checkpoint_config=air.CheckpointConfig(checkpoint_frequency=100)
         )
     )
@@ -111,7 +72,15 @@ def resume_training():
 
 
 if __name__ == '__main__':
-    #resume_training()
-    #apply_ppo(0.8, [512, 256, 128, 64], "relu", "quick-test-2")
-    grid_search_hypers()
+
+    # train hw:
+    hw = {"gpu": 0, "cpu": 3} # imac
+
+    #env_params = {"size": 10, "max_steps": 150, "indestructible_agent": False, "close_bomb_penalty": -0.5}
+    env_params = {"size": 10, "max_steps": 100}
+    nn_model = [512, 256, 128, 64]
+    activation = "relu"
+    description = "todel-simple"
+
+    grid_search_hypers(env_params, nn_model, activation, description, hw)
 
