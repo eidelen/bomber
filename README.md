@@ -12,3 +12,25 @@ The detonation destroys all rocks within a 3x3 square around the bomb, respectiv
 <img src="https://github.com/eidelen/bomber/blob/main/rsc/simple-episode.gif" width="600">
 
 
+## Installation Notes
+### Windows (Python 3.9 and 3.10)
+```
+python -m venv venv
+.\venv\Scripts\activate.ps1    # if problem: Open Powershell as Admin: > Set-ExecutionPolicy RemoteSigned
+python -m pip install -U pip
+python -m pip install -U setuptools
+pip install torch torchvision
+pip install -U "ray[rllib]"
+pip install tqdm tensorboard matplotlib
+```
+
+### OSX
+```
+python -m venv venv
+source venv/bin/activate
+python -m pip install -U pip
+python -m pip install -U setuptools
+pip install torch torchvision
+pip install -U "ray[rllib]"
+pip install tqdm tensorboard matplotlib
+```
