@@ -15,7 +15,7 @@ import copy
 
 class BomberworldEnv(gym.Env):
 
-    def __init__(self, size: int, max_steps: int, indestructible_agent=True, move_penalty=-0.2, collision_penalty=-1.0,
+    def __init__(self, size: int, max_steps: int, indestructible_agent=True, dead_near_bomb=False, move_penalty=-0.2, collision_penalty=-1.0,
                  bomb_penalty=-1.0, close_bomb_penalty=-2.0, rock_reward=1.0, end_game_reward=10.0 ):
         """
         Parameters
@@ -24,6 +24,7 @@ class BomberworldEnv(gym.Env):
         max_steps: Max steps in one game
         indestructible_agent: If True, bomb explodes immediately and agent is indestructible by own bomb.
                               If False, bomb explodes 2 steps later and agent needs to be in safe distance.
+        dead_near_bomb: Only active when indestructible_agent==False. When true, game ends when agent too close to bomb.
         reward / penalty: Several reward and penalty options.
         """
 
@@ -44,6 +45,7 @@ class BomberworldEnv(gym.Env):
         self.size = size
         self.max_steps = max_steps
         self.indestructible_agent = indestructible_agent
+        self.dead_near_bomb = dead_near_bomb
         self.current_step = 0
 
         self.agent_pos = (0, 0)
@@ -142,6 +144,7 @@ class BomberworldEnv(gym.Env):
                 self.active_bombs.append((self.agent_pos, 2))  # detonation two steps later
 
         #go through all active bombs
+        agent_killed = False
         still_active_bombs = []
         for bomb_pos, step_timer in self.active_bombs:
             if step_timer <= 0:
@@ -152,6 +155,8 @@ class BomberworldEnv(gym.Env):
                     squared_dist = (bomb_pos[0]-self.agent_pos[0])**2 + (bomb_pos[1]-self.agent_pos[1])**2
                     if squared_dist < 4.0:
                         reward += self.close_bomb_penalty
+                        if self.dead_near_bomb:
+                            agent_killed = True
             else:
                 still_active_bombs.append((bomb_pos, step_timer - 1))
 
@@ -164,7 +169,7 @@ class BomberworldEnv(gym.Env):
         else:
             terminated = False
 
-        if self.current_step > self.max_steps:
+        if self.current_step > self.max_steps or agent_killed: # end game when max step reached or agent killed
             truncate = True
         else:
             truncate = False

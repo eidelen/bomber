@@ -16,9 +16,10 @@ class MyTestCase(unittest.TestCase):
         closep = -0.4
         rockr = 0.5
         endr = 0.6
+        dnb = True
 
         env = bomberworld.BomberworldEnv(size, maxst, indestructible_agent=indestr, move_penalty=movep, collision_penalty=collip,
-                 bomb_penalty=bombp, close_bomb_penalty=closep, rock_reward=rockr, end_game_reward=endr)
+                 bomb_penalty=bombp, close_bomb_penalty=closep, rock_reward=rockr, end_game_reward=endr, dead_near_bomb=dnb)
 
         self.assertEqual(env.size, size)
         self.assertEqual(env.max_steps, maxst)
@@ -29,6 +30,7 @@ class MyTestCase(unittest.TestCase):
         self.assertAlmostEqual(env.close_bomb_penalty, closep)
         self.assertAlmostEqual(env.rock_reward, rockr)
         self.assertAlmostEqual(env.end_game_reward, endr)
+        self.assertAlmostEqual(env.dead_near_bomb, dnb)
 
     def test_valid_pos(self):
         # test function which checks if position is on the board
@@ -263,16 +265,21 @@ class MyTestCase(unittest.TestCase):
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
         env.set_initial_board((1, 1))
 
-        _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay there at detonation
+        _, r, _, tc, _ = env.step(4)  # bomb at (1,1) and stay there at detonation
         self.assertAlmostEqual(r, env.bomb_penalty)
         self.assertEqual(len(env.active_bombs), 1)
-        _, r, _, _, _ = env.step(0)  # up
+        self.assertFalse(tc)
+
+        _, r, _, tc, _ = env.step(0)  # up
         self.assertAlmostEqual(r, env.move_penalty)
         self.assertEqual(len(env.active_bombs), 1)
-        _, r, _, _, _ = env.step(2)  # down and bomb detonates
+        self.assertFalse(tc)
+
+        _, r, _, tc, _ = env.step(2)  # down and bomb detonates
         self.assertEqual(env.agent_pos, (1,1))
         self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 0)
+        self.assertFalse(tc)
 
         _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay (0,0) at detonation
         self.assertAlmostEqual(r, env.bomb_penalty)
@@ -664,6 +671,27 @@ class MyTestCase(unittest.TestCase):
 
         print(reward)
 
+
+    def test_destructable_dead_near_bomb_agent(self):
+        size = 10
+        env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False, dead_near_bomb=True)
+        env.set_initial_board((1, 1))
+
+        _, r, _, tc, _ = env.step(4)  # bomb at (1,1) and stay there at detonation
+        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        self.assertFalse(tc)
+
+        _, r, _, tc, _ = env.step(0)  # up
+        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertEqual(len(env.active_bombs), 1)
+        self.assertFalse(tc)
+
+        _, r, _, tc, _ = env.step(2)  # down and bomb detonates
+        self.assertEqual(env.agent_pos, (1,1))
+        self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
+        self.assertEqual(len(env.active_bombs), 0)
+        self.assertTrue(tc)
 
 
 if __name__ == '__main__':
