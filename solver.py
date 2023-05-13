@@ -38,7 +38,7 @@ def grid_search_hypers(env_params: dict, nn_model: list, activation: str, desc: 
     config.model['fcnet_activation'] = activation
 
     config = config.rollouts(num_rollout_workers=train_hw["cpu"])
-    #config = config.training( lr=ray.tune.grid_search([5e-05, 4e-05])) #, gamma=ray.tune.grid_search([0.99])) , lambda_=ray.tune.grid_search([1.0, 0.997, 0.95]))
+    config = config.training( gamma=ray.tune.grid_search([0.80, 0.85, 0.90])) # lr=ray.tune.grid_search([5e-05, 4e-05])) #, gamma=ray.tune.grid_search([0.99])) , lambda_=ray.tune.grid_search([1.0, 0.997, 0.95]))
 
     config = config.debugging(log_level="ERROR")
 
@@ -77,8 +77,8 @@ if __name__ == '__main__':
     hw = {"gpu": 0, "cpu": 3} # imac
 
     #env_params = {"size": 10, "max_steps": 100, "indestructible_agent": False, "dead_near_bomb": True}
-    env_params = {"size": 10, "max_steps": 100}
-    nn_model = [256, 128, 64]
+    env_params = {"size": 10, "max_steps": 100, "dead_when_colliding": True}
+    nn_model = [512, 256, 128, 64]
     activation = "relu"
     description = "SimpleBomber-KilledWhenHitWallRock"
 

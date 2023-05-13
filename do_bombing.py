@@ -10,11 +10,11 @@ def run_bombing(path_to_checkpoint: str):
 
     trained_policy = Policy.from_checkpoint(path_to_checkpoint)
 
-    env = bomberworld.BomberworldEnv(10, 100)
+    env = bomberworld.BomberworldEnv(10, 100, dead_when_colliding=True)
     o, info = env.reset()
 
     plotter = BomberworldPlotter(size=env.size, animated_gif_folder_path="gifs")
-    plotter.add_frame(env.agent_pos, False, env.make_observation_2D())
+    plotter.add_frame(env.agent_pos, None, None, env.make_observation_2D())
 
     reward_sum = 0
     terminated, truncated = False, False
@@ -22,7 +22,7 @@ def run_bombing(path_to_checkpoint: str):
         a = trained_policy.compute_single_action(o)[0]
         o, r, terminated, truncated, info = env.step(a)
         reward_sum += r
-        plotter.add_frame(env.agent_pos, a == 4, env.make_observation_2D())
+        plotter.add_frame(agent_position=env.agent_pos, placed_bomb=info["placed_bomb"], exploded_bomb=info["exploded_bomb"], stones=env.make_observation_2D())
         plotter.plot_episode(current_reward=reward_sum)
         print("Current Reward:", reward_sum)
 
@@ -33,7 +33,7 @@ def run_bombing(path_to_checkpoint: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog='do_bombing',
-        description='Runs bombin model')
+        description='Runs bombing model')
     parser.add_argument('path', help='File path to checkpoint')
     args = parser.parse_args()
     run_bombing(args.path)

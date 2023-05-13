@@ -123,6 +123,10 @@ class BomberworldEnv(gym.Env):
         reward = 0.0
         agent_killed = False
 
+        # debug info
+        placed_bomb = None
+        exploded_bomb = None
+
         if action < 4: # move actions
             if action == 0: # up
                 next_pos = (self.agent_pos[0]-1, self.agent_pos[1])
@@ -143,6 +147,7 @@ class BomberworldEnv(gym.Env):
 
         elif action == 4: # drop bomb at agent location
             reward += self.bomb_penalty  # penalty for each dropped bomb
+            placed_bomb = self.agent_pos
             if self.indestructible_agent:
                 self.active_bombs.append((self.agent_pos, 0)) # immediate detonation
             else:
@@ -153,6 +158,7 @@ class BomberworldEnv(gym.Env):
         for bomb_pos, step_timer in self.active_bombs:
             if step_timer <= 0:
                 reward += self.rock_reward * self.bomb_3x3(bomb_pos) # detonate bomb
+                exploded_bomb = bomb_pos
 
                 if not self.indestructible_agent:
                     # check that agent is in safe distance
@@ -180,4 +186,4 @@ class BomberworldEnv(gym.Env):
 
         self.current_step += 1
 
-        return self.make_observation(), reward, terminated, truncate, {}
+        return self.make_observation(), reward, terminated, truncate, {"placed_bomb": placed_bomb, "exploded_bomb": exploded_bomb}

@@ -122,9 +122,11 @@ class MyTestCase(unittest.TestCase):
         env.set_initial_board((0,0))
 
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
-        obs, reward, _, stopped, _ = env.step(0) # up not possible
+        obs, reward, _, stopped, dbg = env.step(0) # up not possible
         self.assertAlmostEqual(reward, env.collision_penalty)
         self.assertAlmostEqual(env.make_observation_2D()[(0,0)], env.agent_val)
+        self.assertIsNone(dbg["placed_bomb"])
+        self.assertIsNone(dbg["exploded_bomb"])
         self.assertFalse(stopped)
 
         obs, reward, _, stopped, _ = env.step(3)  # left not possible
@@ -169,9 +171,14 @@ class MyTestCase(unittest.TestCase):
         env = bomberworld.BomberworldEnv(size, 100)
         env.set_initial_board((0, 0))
 
-        obs, reward, _, _, _ = env.step(4)  # no rock bombed
+        obs, reward, _, _, dbg = env.step(4)  # no rock bombed
         self.assertAlmostEqual(reward, env.bomb_penalty)
         self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.agent_val)
+        # check debug output
+        self.assertIsNotNone(dbg["placed_bomb"])
+        self.assertIsNotNone(dbg["exploded_bomb"])
+        self.assertEqual(dbg["placed_bomb"], (0, 0))
+        self.assertEqual(dbg["exploded_bomb"], (0, 0))
 
         obs, reward, _, _, _ = env.step(1) # move to (0,1)
         obs, reward, _, _, _ = env.step(4)  # 2 rocks bombed
@@ -270,21 +277,32 @@ class MyTestCase(unittest.TestCase):
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
         env.set_initial_board((1, 1))
 
-        _, r, _, tc, _ = env.step(4)  # bomb at (1,1) and stay there at detonation
+        _, r, _, tc, dbg = env.step(4)  # bomb at (1,1) and stay there at detonation
         self.assertAlmostEqual(r, env.bomb_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         self.assertFalse(tc)
+        # check debug output
+        self.assertIsNotNone(dbg["placed_bomb"])
+        self.assertIsNone(dbg["exploded_bomb"])
+        self.assertEqual(dbg["placed_bomb"], (1, 1))
 
-        _, r, _, tc, _ = env.step(0)  # up
+        _, r, _, tc, dbg = env.step(0)  # up
         self.assertAlmostEqual(r, env.move_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         self.assertFalse(tc)
+        # check debug output
+        self.assertIsNone(dbg["placed_bomb"])
+        self.assertIsNone(dbg["exploded_bomb"])
 
-        _, r, _, tc, _ = env.step(2)  # down and bomb detonates
+        _, r, _, tc, dbg = env.step(2)  # down and bomb detonates
         self.assertEqual(env.agent_pos, (1,1))
         self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 0)
         self.assertFalse(tc)
+        # check debug output
+        self.assertIsNone(dbg["placed_bomb"])
+        self.assertIsNotNone(dbg["exploded_bomb"])
+        self.assertEqual(dbg["exploded_bomb"], (1, 1))
 
         _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay (0,0) at detonation
         self.assertAlmostEqual(r, env.bomb_penalty)
@@ -354,7 +372,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(env.agent_pos, (1, 1))
         self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.empty_val)
         self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.agent_val)
-        
+
 
     def test_destructable_multiple_bombs(self):
         size = 10

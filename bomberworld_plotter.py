@@ -30,15 +30,17 @@ class BomberworldPlotter:
         self.agent_traj: List[Tuple[int, int]] = []
         self.bomb_traj: List[Tuple[int, int]] = []
         self.stones: np.ndarray = np.zeros((self.size, self.size), dtype=np.float32)
+        self.explosion: Tuple[int, int] = None
         self.agent_shape = [[.2, .6], [.2, .3], [.3, .1], [.7, .1], [.8, .3], [.8, .6]]
 
-    def add_frame(self, agent_position: Tuple[int, int], bombed: bool, stones: np.ndarray ) -> None:
-        if bombed:
-            self.bomb_traj.append(agent_position)
-        else:
+    def add_frame(self, agent_position: Tuple[int, int], placed_bomb: Tuple[int, int], exploded_bomb: Tuple[int, int], stones: np.ndarray ) -> None:
+        if placed_bomb is None:
             self.agent_traj.append(agent_position)
+        else:
+            self.bomb_traj.append(placed_bomb) # bomb placed -> agent did not move
 
         self.stones = stones
+        self.explosion = exploded_bomb
 
     def plot_episode(self, current_reward = None):
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=mpl.figure.figaspect(1))
@@ -49,6 +51,7 @@ class BomberworldPlotter:
         self.draw_path(ax, self.agent_traj, color='red', line_width=1)
         self.draw_bombs(ax, self.bomb_traj)
         self.draw_agent(ax, self.agent_traj[0][0], self.agent_traj[0][1])
+        self.draw_explosion(ax, self.explosion)
 
         if current_reward is not None:
             ax.text(0.0, -1.0, f"Reward: {current_reward}")
@@ -84,6 +87,12 @@ class BomberworldPlotter:
             ax.text(n+0.3, m+0.6, str(index))
             index += 1
 
+    @staticmethod
+    def draw_explosion(ax: mpl.axes.Axes, explosion: Tuple[int, int]):
+        if explosion is not None:
+            m, n = explosion
+            ax.add_patch(patches.Ellipse((n + 0.5, m + 0.5), width=2.0, height=2.0, ec="red", linewidth=3.0, fill=False))
+            ax.add_patch(patches.Ellipse((n + 0.5, m + 0.5), width=2.5, height=2.5, ec="yellow", linewidth=4.0, fill=False))
 
     @staticmethod
     def draw_stones(ax: mpl.axes.Axes, stones: np.ndarray):
