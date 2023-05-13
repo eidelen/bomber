@@ -17,8 +17,9 @@ class MyTestCase(unittest.TestCase):
         rockr = 0.5
         endr = 0.6
         dnb = True
+        dc = True
 
-        env = bomberworld.BomberworldEnv(size, maxst, indestructible_agent=indestr, move_penalty=movep, collision_penalty=collip,
+        env = bomberworld.BomberworldEnv(size, maxst, indestructible_agent=indestr, dead_when_colliding=dc, move_penalty=movep, collision_penalty=collip,
                  bomb_penalty=bombp, close_bomb_penalty=closep, rock_reward=rockr, end_game_reward=endr, dead_near_bomb=dnb)
 
         self.assertEqual(env.size, size)
@@ -31,6 +32,7 @@ class MyTestCase(unittest.TestCase):
         self.assertAlmostEqual(env.rock_reward, rockr)
         self.assertAlmostEqual(env.end_game_reward, endr)
         self.assertAlmostEqual(env.dead_near_bomb, dnb)
+        self.assertAlmostEqual(env.dead_when_colliding, dc)
 
     def test_valid_pos(self):
         # test function which checks if position is on the board
@@ -120,18 +122,21 @@ class MyTestCase(unittest.TestCase):
         env.set_initial_board((0,0))
 
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
-        obs, reward, _, _, _ = env.step(0) # up not possible
+        obs, reward, _, stopped, _ = env.step(0) # up not possible
         self.assertAlmostEqual(reward, env.collision_penalty)
         self.assertAlmostEqual(env.make_observation_2D()[(0,0)], env.agent_val)
+        self.assertFalse(stopped)
 
-        obs, reward, _, _, _ = env.step(3)  # left not possible
+        obs, reward, _, stopped, _ = env.step(3)  # left not possible
         self.assertAlmostEqual(reward, env.collision_penalty)
+        self.assertFalse(stopped)
 
-        obs, reward, _, _, _ = env.step(1)  # right possible
+        obs, reward, _, stopped, _ = env.step(1)  # right possible
         self.assertAlmostEqual(reward, env.move_penalty)
         self.assertEqual(env.agent_pos, (0,1))
         self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.empty_val) # previous field empty
         self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.agent_val) # current field agent
+        self.assertFalse(stopped)
 
         obs, reward, _, _, _ = env.step(1)  # right again not possible
         self.assertAlmostEqual(reward, env.collision_penalty)
@@ -349,6 +354,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(env.agent_pos, (1, 1))
         self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.empty_val)
         self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.agent_val)
+        
 
     def test_destructable_multiple_bombs(self):
         size = 10
@@ -692,6 +698,17 @@ class MyTestCase(unittest.TestCase):
         self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 0)
         self.assertTrue(tc)
+
+    def test_dead_collision_agent(self):
+        size = 10
+        env = bomberworld.BomberworldEnv(size, 100, dead_when_colliding=True)
+        env.set_initial_board((0, 0))
+
+        # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
+        obs, reward, _, stopped, _ = env.step(0)  # up not possible -> agent dead
+        self.assertAlmostEqual(reward, env.collision_penalty)
+        self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.agent_val)
+        self.assertTrue(stopped)
 
 
 if __name__ == '__main__':

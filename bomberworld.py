@@ -15,7 +15,7 @@ import copy
 
 class BomberworldEnv(gym.Env):
 
-    def __init__(self, size: int, max_steps: int, indestructible_agent=True, dead_near_bomb=False, move_penalty=-0.2, collision_penalty=-1.0,
+    def __init__(self, size: int, max_steps: int, indestructible_agent=True, dead_near_bomb=False, dead_when_colliding=False, move_penalty=-0.2, collision_penalty=-1.0,
                  bomb_penalty=-1.0, close_bomb_penalty=-2.0, rock_reward=1.0, end_game_reward=10.0 ):
         """
         Parameters
@@ -25,6 +25,7 @@ class BomberworldEnv(gym.Env):
         indestructible_agent: If True, bomb explodes immediately and agent is indestructible by own bomb.
                               If False, bomb explodes 2 steps later and agent needs to be in safe distance.
         dead_near_bomb: Only active when indestructible_agent==False. When true, game ends when agent too close to bomb.
+        dead_when_colliding: When true, game ends when agent collides with rock or wall.
         reward / penalty: Several reward and penalty options.
         """
 
@@ -46,6 +47,7 @@ class BomberworldEnv(gym.Env):
         self.max_steps = max_steps
         self.indestructible_agent = indestructible_agent
         self.dead_near_bomb = dead_near_bomb
+        self.dead_when_colliding = dead_when_colliding
         self.current_step = 0
 
         self.agent_pos = (0, 0)
@@ -119,6 +121,7 @@ class BomberworldEnv(gym.Env):
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, dict]:
 
         reward = 0.0
+        agent_killed = False
 
         if action < 4: # move actions
             if action == 0: # up
@@ -135,6 +138,8 @@ class BomberworldEnv(gym.Env):
                 reward += self.move_penalty # penalty for each move
             else:
                 reward += self.collision_penalty
+                if self.dead_when_colliding:
+                    agent_killed = True
 
         elif action == 4: # drop bomb at agent location
             reward += self.bomb_penalty  # penalty for each dropped bomb
@@ -144,7 +149,6 @@ class BomberworldEnv(gym.Env):
                 self.active_bombs.append((self.agent_pos, 2))  # detonation two steps later
 
         #go through all active bombs
-        agent_killed = False
         still_active_bombs = []
         for bomb_pos, step_timer in self.active_bombs:
             if step_timer <= 0:
