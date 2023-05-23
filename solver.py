@@ -38,11 +38,11 @@ def grid_search_hypers(env_params: dict, nn_model: list, activation: str, desc: 
     config.model['fcnet_activation'] = activation
 
     config = config.rollouts(num_rollout_workers=train_hw["cpu"])
-    config = config.training( gamma=ray.tune.grid_search([0.80, 0.85, 0.90])) # lr=ray.tune.grid_search([5e-05, 4e-05])) #, gamma=ray.tune.grid_search([0.99])) , lambda_=ray.tune.grid_search([1.0, 0.997, 0.95]))
+    config = config.training( gamma=0.75 ) # lr=ray.tune.grid_search([5e-05, 4e-05])) #, gamma=ray.tune.grid_search([0.99])) , lambda_=ray.tune.grid_search([1.0, 0.997, 0.95]))
 
     config = config.debugging(log_level="ERROR")
 
-    experiment_name = f"PPO_{desc}_{datetime.now():%H-%M}_MODEL={nn_model}_ACT={activation}"
+    experiment_name = f"PPO_{desc}_{datetime.now():%Y-%m-%d_%H-%M}_MODEL={nn_model}_ACT={activation}"
 
     tuner = Tuner(
         trainable=PPO,
@@ -51,8 +51,8 @@ def grid_search_hypers(env_params: dict, nn_model: list, activation: str, desc: 
             name=experiment_name,
             local_dir="out",
             verbose=2,
-            stop=MaximumIterationStopper(1000),
-            checkpoint_config=air.CheckpointConfig(checkpoint_frequency=100)
+            stop=MaximumIterationStopper(2000000),
+            checkpoint_config=air.CheckpointConfig(checkpoint_frequency=400)
         )
     )
 
@@ -64,23 +64,28 @@ def resume_training():
     # rsc: https://discuss.ray.io/t/unable-to-restore-fully-trained-checkpoint/8259/8
     # rsc: https://github.com/ray-project/ray/issues/4569
     # Note: The call works, but training does not continue (max iter reached?!)
-    tuner = Tuner.restore(
-        "/Users/eidelen/dev/bomber/out/PPO_GRIDWORLD_15-52_GAMMA=0.8_MODEL=[256, 256, 128, 64]_ACT=relu")
+    tuner = Tuner.restore("out/PPO_SmartBomber-DeadNearBomb-LongTraining-Gamma-0.75_2023-05-17_07-41_MODEL=[512, 512, 256, 128, 64]_ACT=relu")
 
-    tuner
+
     tuner.fit()
 
 
 if __name__ == '__main__':
 
-    # train hw:
-    hw = {"gpu": 0, "cpu": 3} # imac
+    #resume_training()
 
-    #env_params = {"size": 10, "max_steps": 100, "indestructible_agent": False, "dead_near_bomb": True}
-    env_params = {"size": 10, "max_steps": 100, "dead_when_colliding": True}
-    nn_model = [512, 256, 128, 64]
-    activation = "relu"
-    description = "SimpleBomber-KilledWhenHitWallRock"
+    if True:
 
-    grid_search_hypers(env_params, nn_model, activation, description, hw)
+        # train hw:
+        #hw = {"gpu": 0, "cpu": 3} # imac
+        hw = {"gpu": 1, "cpu": 11}  # adris
+
+
+        #env_params = {"size": 10, "max_steps": 100, "indestructible_agent": False, "dead_near_bomb": True}
+        env_params = {"size": 10, "max_steps": 200, "dead_when_colliding": True, "dead_near_bomb": True, "indestructible_agent": False, "close_bomb_penalty": -1.0}
+        nn_model = [512, 512, 256, 128, 64]
+        activation = "relu"
+        description = "SmartBomber-DeadNearBomb-UltraLongTraining-Gamma-0.75"
+
+        grid_search_hypers(env_params, nn_model, activation, description, hw)
 

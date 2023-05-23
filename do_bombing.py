@@ -9,8 +9,7 @@ from bomberworld_plotter import BomberworldPlotter
 def run_bombing(path_to_checkpoint: str):
 
     trained_policy = Policy.from_checkpoint(path_to_checkpoint)
-
-    env = bomberworld.BomberworldEnv(10, 100, dead_when_colliding=True)
+    env = bomberworld.BomberworldEnv(10, 150, dead_when_colliding=True, dead_near_bomb=True, indestructible_agent=False, close_bomb_penalty=-1.0)
     o, info = env.reset()
 
     plotter = BomberworldPlotter(size=env.size, animated_gif_folder_path="gifs")
@@ -25,7 +24,6 @@ def run_bombing(path_to_checkpoint: str):
         plotter.add_frame(agent_position=env.agent_pos, placed_bomb=info["placed_bomb"], exploded_bomb=info["exploded_bomb"], stones=env.make_observation_2D())
         plotter.plot_episode(current_reward=reward_sum)
         print("Current Reward:", reward_sum)
-
     print("Overall Reward:", reward_sum)
     plotter.create_animated_gif_from_episodes()
 
