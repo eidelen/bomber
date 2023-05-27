@@ -36,6 +36,7 @@ def grid_search_hypers(env_params: dict, nn_model: list, activation: str, desc: 
 
     config.model['fcnet_hiddens'] = nn_model
     config.model['fcnet_activation'] = activation
+    config.model['use_lstm'] = True,
 
     config = config.rollouts(num_rollout_workers=train_hw["cpu"])
     config = config.training( gamma=ray.tune.grid_search([0.75, 0.80, 0.85, 0.90, 0.95, 0.997])) # lr=ray.tune.grid_search([5e-05, 4e-05])) #, gamma=ray.tune.grid_search([0.99])) , lambda_=ray.tune.grid_search([1.0, 0.997, 0.95]))
