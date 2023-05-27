@@ -15,7 +15,7 @@ import copy
 
 class BomberworldEnv(gym.Env):
 
-    def __init__(self, size: int, max_steps: int, indestructible_agent=True, dead_near_bomb=False, dead_when_colliding=False, move_penalty=-0.2, collision_penalty=-1.0,
+    def __init__(self, size: int, max_steps: int, indestructible_agent=True, dead_near_bomb=False, dead_when_colliding=False, reduced_obs=False, move_penalty=-0.2, collision_penalty=-1.0,
                  bomb_penalty=-1.0, close_bomb_penalty=-2.0, rock_reward=1.0, end_game_reward=10.0 ):
         """
         Parameters
@@ -26,6 +26,7 @@ class BomberworldEnv(gym.Env):
                               If False, bomb explodes 2 steps later and agent needs to be in safe distance.
         dead_near_bomb: Only active when indestructible_agent==False. When true, game ends when agent too close to bomb.
         dead_when_colliding: When true, game ends when agent collides with rock or wall.
+        reduced_obs: When true, agent only sees surrounding 3x3 patch.
         reward / penalty: Several reward and penalty options.
         """
 
@@ -48,13 +49,17 @@ class BomberworldEnv(gym.Env):
         self.indestructible_agent = indestructible_agent
         self.dead_near_bomb = dead_near_bomb
         self.dead_when_colliding = dead_when_colliding
+        self.reduced_obs = reduced_obs
         self.current_step = 0
 
         self.agent_pos = (0, 0)
         self.stones = np.full((self.size, self.size), True)
         self.active_bombs = []
 
-        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(size * size,), dtype=np.float32)
+        if self.reduced_obs:
+            self.observation_space = gym.spaces.Box(low=0, high=1, shape=(3 * 3,), dtype=np.float32)
+        else:
+            self.observation_space = gym.spaces.Box(low=0, high=1, shape=(size * size,), dtype=np.float32)
         self.action_space = gym.spaces.Discrete(5)
 
         # print info
@@ -91,7 +96,16 @@ class BomberworldEnv(gym.Env):
             board[bomb_pos] = self.bomb_val
         # set agent
         board[self.agent_pos] = self.bomb_and_agent_val if self.is_active_bomb_on_field(self.agent_pos) else self.agent_val
-        return board
+
+        if self.reduced_obs: # cut 3x3 patch around agent
+            m_ap, n_ap = self.agent_pos
+            m_center = max(1, m_ap)
+            m_center = min(self.size-2, m_center)
+            n_center = max(1, n_ap)
+            n_center = min(self.size - 2, n_center)
+            return board[m_center-1:m_center+2, n_center-1:n_center+2]
+        else:
+            return board
 
     def make_observation(self) -> np.ndarray:
         o = self.make_observation_2D()

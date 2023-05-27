@@ -728,6 +728,140 @@ class MyTestCase(unittest.TestCase):
         self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.agent_val)
         self.assertTrue(stopped)
 
+    def test_smaller_fields_4x4(self):
+        reward = 0.0
+        size = 4
+        env = bomberworld.BomberworldEnv(size, 50)
+        env.set_initial_board((1, 1))
+
+        _, r, terminated, _, _ = env.step(2)  # down
+        reward += r
+        _, r, terminated, _, _ = env.step(4)  # bomb
+        reward += r
+        self.assertAlmostEqual(1 * env.move_penalty + 1 * env.bomb_penalty + 3 * env.rock_reward, reward)
+        self.assertFalse(terminated)
+
+        _, r, terminated, _, _ = env.step(1)  # right
+        reward += r
+        _, r, terminated, _, _ = env.step(4)  # bomb
+        reward += r
+        self.assertAlmostEqual(2 * env.move_penalty + 2 * env.bomb_penalty + 6 * env.rock_reward, reward)
+        self.assertFalse(terminated)
+
+        # try to leave area
+        _, r, terminated, _, _ = env.step(1)  # right
+        reward += r
+        _, r, terminated, _, _ = env.step(1)  # not possible right
+        reward += r
+
+        self.assertAlmostEqual(3 * env.move_penalty + 1 * env.collision_penalty + 2 * env.bomb_penalty + 6 * env.rock_reward, reward)
+        self.assertFalse(terminated)
+
+        _, r, terminated, _, _ = env.step(0)  # up
+        reward += r
+        _, r, terminated, _, _ = env.step(4)  # bomb
+        reward += r
+        self.assertAlmostEqual(4 * env.move_penalty + 1 * env.collision_penalty + 3 * env.bomb_penalty + 7 * env.rock_reward + env.end_game_reward, reward)
+        self.assertTrue(terminated)
+
+        print(env.make_observation_2D())
+
+
+    def test_reduced_obs(self):
+        reward = 0.0
+        size = 4
+        env = bomberworld.BomberworldEnv(size, 50, reduced_obs=True)
+        env.set_initial_board((1, 1))
+
+        b = env.make_observation_2D()
+
+        self.assertEqual(b.shape[0], 3)
+        self.assertEqual(b.shape[1], 3)
+        self.assertAlmostEqual(b[(1,1)], env.agent_val)
+        self.assertAlmostEqual(b[(1, 0)], env.empty_val)
+
+        env.step(3) # left -> agent at boarder
+        b = env.make_observation_2D()
+        self.assertAlmostEqual(b[(1, 1)], env.empty_val)
+        self.assertAlmostEqual(b[(1, 0)], env.agent_val)
+
+        env.step(1)  # right
+        env.step(1)  # right
+        b = env.make_observation_2D()
+
+        self.assertAlmostEqual(b[(1, 1)], env.agent_val)
+        self.assertAlmostEqual(b[(1, 0)], env.empty_val)
+        self.assertAlmostEqual(b[(1, 2)], env.rock_val)
+
+        env.step(4)  # bomb
+        b = env.make_observation_2D()
+
+        self.assertAlmostEqual(b[(1, 1)], env.agent_val)
+        self.assertAlmostEqual(b[(1, 0)], env.empty_val)
+        self.assertAlmostEqual(b[(1, 2)], env.empty_val)
+
+        env.step(1)  # right -> at boarder
+        b = env.make_observation_2D()
+        print(b)
+
+        self.assertAlmostEqual(b[(1, 1)], env.empty_val)
+        self.assertAlmostEqual(b[(1, 0)], env.empty_val)
+        self.assertAlmostEqual(b[(1, 2)], env.agent_val)
+
+
+    def test_good_run_reduced(self):
+        reward = 0.0
+        size = 10
+        env = bomberworld.BomberworldEnv(size, 100, reduced_obs=True)
+        env.set_initial_board((1, 1))
+
+        for i in range(0, 7):
+            _, r, terminated, _, _ = env.step(2) # down
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 7):
+            _, r, terminated, _, _ = env.step(1) # right
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 7):
+            _, r, terminated, _, _ = env.step(0) # up
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 4):
+            _, r, terminated, _, _ = env.step(3)  # left
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 4):
+            _, r, terminated, _, _ = env.step(2) # down
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            reward += r
+
+        for i in range(0, 1):
+            _, r, terminated, _, _ = env.step(1) # right
+            self.assertFalse(terminated)
+            reward += r
+            _, r, terminated, _, _ = env.step(4)  # bomb
+            self.assertFalse(terminated)
+            reward += r
+
+        _, r, terminated, _, _ = env.step(0)  # up
+        reward += r
+        self.assertFalse(terminated)
+        _, r, terminated, _, _ = env.step(4)  # bomb
+        reward += r
+        self.assertTrue(terminated)
+        print(reward)
+
+
 
 if __name__ == '__main__':
     unittest.main()
