@@ -16,6 +16,7 @@ def env_create(env_config: EnvContext):
     return bomberworld.BomberworldEnv(**env_config)
 
 def print_ppo_configs(config):
+    print("Ray Version:", ray.__version__)
     print("clip_param", config.clip_param)
     print("gamma", config.gamma)
     print("lr", config.lr)
@@ -36,7 +37,16 @@ def grid_search_hypers(env_params: dict, nn_model: list, activation: str, desc: 
 
     config.model['fcnet_hiddens'] = nn_model
     config.model['fcnet_activation'] = activation
-    config.model['use_lstm'] = True,
+
+    # another help -> https://github.com/ray-project/ray/issues/9220
+    config.model['use_lstm'] = True
+    # Max seq len for training the LSTM, defaults to 20.
+    config.model['max_seq_len'] = 20
+    # Size of the LSTM cell.
+    config.model['lstm_cell_size'] = 256
+    # Whether to feed a_{t-1}, r_{t-1} to LSTM.
+    config.model['lstm_use_prev_reward'] = False
+    config.model['lstm_use_prev_action'] = False
 
     config = config.rollouts(num_rollout_workers=train_hw["cpu"])
     config = config.training( gamma=ray.tune.grid_search([0.75, 0.80, 0.85, 0.90, 0.95, 0.997])) # lr=ray.tune.grid_search([5e-05, 4e-05])) #, gamma=ray.tune.grid_search([0.99])) , lambda_=ray.tune.grid_search([1.0, 0.997, 0.95]))
@@ -53,7 +63,7 @@ def grid_search_hypers(env_params: dict, nn_model: list, activation: str, desc: 
             local_dir="out",
             verbose=2,
             stop=MaximumIterationStopper(200),
-            checkpoint_config=air.CheckpointConfig(checkpoint_frequency=100)
+            checkpoint_config=air.CheckpointConfig(checkpoint_frequency=5)
         )
     )
 
