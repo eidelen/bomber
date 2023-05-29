@@ -7,18 +7,15 @@ import argparse
 import bomberworld
 from bomberworld_plotter import BomberworldPlotter
 
-def run_bombing(path_to_checkpoint: str):
+def run_bombing(path_to_checkpoint: str, use_lstm: bool):
 
     trained_policy = Policy.from_checkpoint(path_to_checkpoint)
-    model_config = trained_policy.model.model_config
 
-    # hack to make lstm work
-    cell_size = 256
-    lstm_states = [np.zeros(cell_size, np.float32),
-             np.zeros(cell_size, np.float32)]
-    # end hack
+    if use_lstm: # set initial blank lstm states
+        cell_size = 256
+        lstm_states = [np.zeros(cell_size, np.float32), np.zeros(cell_size, np.float32)]
 
-    env = bomberworld.BomberworldEnv(6, 40, dead_when_colliding=True, reduced_obs=True)
+    env = bomberworld.BomberworldEnv(8, 60, dead_when_colliding=True, reduced_obs=True)
     o, info = env.reset()
 
     plotter = BomberworldPlotter(size=env.size, animated_gif_folder_path="gifs")
@@ -28,9 +25,11 @@ def run_bombing(path_to_checkpoint: str):
     terminated, truncated = False, False
     while not (terminated or truncated):
 
-        # Hack to make lstm work
-        a, next_states, _ = trained_policy.compute_single_action(o, state=lstm_states)  # When using lstm -> "assert seq_lens is not None" : https://github.com/ray-project/ray/issues/10448#issuecomment-1151468435
-        lstm_states = next_states
+        if use_lstm:
+            a, next_states, _ = trained_policy.compute_single_action(o, state=lstm_states)
+            lstm_states = next_states # update lstm states
+        else:
+            a = trained_policy.compute_single_action(o)[0]
 
         o, r, terminated, truncated, info = env.step(a)
         reward_sum += r
@@ -47,4 +46,4 @@ if __name__ == '__main__':
         description='Runs bombing model')
     parser.add_argument('path', help='File path to checkpoint')
     args = parser.parse_args()
-    run_bombing(args.path)
+    run_bombing(args.path, use_lstm=True)
