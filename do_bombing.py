@@ -15,7 +15,7 @@ def run_bombing(path_to_checkpoint: str, use_lstm: bool):
         cell_size = 256
         lstm_states = [np.zeros(cell_size, np.float32), np.zeros(cell_size, np.float32)]
 
-    env = bomberworld.BomberworldEnv(8, 60, dead_when_colliding=True, reduced_obs=True)
+    env = bomberworld.BomberworldEnv(6, 60, dead_when_colliding=True, reduced_obs=True, indestructible_agent=False, dead_near_bomb=True)
     o, info = env.reset()
 
     plotter = BomberworldPlotter(size=env.size, animated_gif_folder_path="gifs")
