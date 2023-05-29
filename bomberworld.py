@@ -86,7 +86,7 @@ class BomberworldEnv(gym.Env):
     def can_move_to_pos(self, pos: Tuple[int, int]) -> bool:
         return self.is_valid_pos(pos) and (not self.stones[pos])
 
-    def make_observation_2D(self) -> np.ndarray:
+    def make_current_board_2D(self) -> np.ndarray:
         board = np.zeros((self.size, self.size), dtype=np.float32)
         # set rocks
         for m, n in np.ndindex(self.stones.shape):
@@ -95,8 +95,13 @@ class BomberworldEnv(gym.Env):
         for bomb_pos, _ in self.active_bombs:
             board[bomb_pos] = self.bomb_val
         # set agent
-        board[self.agent_pos] = self.bomb_and_agent_val if self.is_active_bomb_on_field(self.agent_pos) else self.agent_val
+        board[self.agent_pos] = self.bomb_and_agent_val if self.is_active_bomb_on_field(
+            self.agent_pos) else self.agent_val
 
+        return board
+
+    def make_observation_2D(self) -> np.ndarray:
+        board = self.make_current_board_2D()
         if self.reduced_obs: # cut 3x3 patch around agent
             m_ap, n_ap = self.agent_pos
             m_center = max(1, m_ap)
