@@ -2,11 +2,12 @@
 # Author: Adrian Schneider, armasuisse
 # Note: Initial copied from Giacomo Del Rio, IDSIA
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 import gymnasium as gym
 import numpy as np
 import copy
+from random import randrange
 
 # Best performance when size = 10 and no penalty on moving and allowed being close to bomb
 # 10 x 10 = 100 stones - 6 = 94
@@ -15,7 +16,7 @@ import copy
 
 class BomberworldEnv(gym.Env):
 
-    def __init__(self, size: int, max_steps: int, indestructible_agent=True, dead_near_bomb=False, dead_when_colliding=False, reduced_obs=False, move_penalty=-0.2, collision_penalty=-1.0,
+    def __init__(self, size: int | List[int], max_steps: int, indestructible_agent=True, dead_near_bomb=False, dead_when_colliding=False, reduced_obs=False, move_penalty=-0.2, collision_penalty=-1.0,
                  bomb_penalty=-1.0, close_bomb_penalty=-2.0, rock_reward=1.0, end_game_reward=10.0 ):
         """
         Parameters
@@ -45,6 +46,7 @@ class BomberworldEnv(gym.Env):
         self.end_game_reward = end_game_reward
 
         self.size = size
+        self.board_size = None
         self.max_steps = max_steps
         self.indestructible_agent = indestructible_agent
         self.dead_near_bomb = dead_near_bomb
@@ -52,42 +54,42 @@ class BomberworldEnv(gym.Env):
         self.reduced_obs = reduced_obs
         self.current_step = 0
 
-        self.agent_pos = (0, 0)
-        self.stones = np.full((self.size, self.size), True)
-        self.active_bombs = []
-
         if self.reduced_obs:
             self.observation_space = gym.spaces.Box(low=0, high=1, shape=(3 * 3,), dtype=np.float32)
         else:
             self.observation_space = gym.spaces.Box(low=0, high=1, shape=(size * size,), dtype=np.float32)
         self.action_space = gym.spaces.Discrete(5)
 
-        # print info
-        print("Simple Bomber World") if self.indestructible_agent else print("Complex Bomber World")
-
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None) -> Tuple[np.ndarray, dict]:
         super().reset(seed=seed)
         self.current_step = 0
-        self.set_initial_board(tuple(self.np_random.integers(low=0, high=self.size, size=2)))
+
+        if type(self.size) is list: # randomly select a board size form the list
+            self.board_size = self.size[randrange(len(self.size))]
+        else:
+            self.board_size = self.size
+
+        self.set_initial_board(self.board_size, tuple(self.np_random.integers(low=0, high=self.board_size, size=2)))
         return self.make_observation(), {}
 
-    def set_initial_board(self, agent_pos):
-        self.stones = np.full((self.size, self.size), True)
+    def set_initial_board(self, size, agent_pos):
+        self.stones = np.full((size, size), True)
         self.agent_pos = agent_pos
+        self.active_bombs = []
 
         # initially remove all 8 stones around the agent
         self.bomb_3x3(agent_pos)
 
     def is_valid_pos(self, pos: Tuple[int, int]) -> bool:
         m, n = pos
-        return (-1 < m < self.size) and (-1 < n < self.size)
+        return (-1 < m < self.board_size) and (-1 < n < self.board_size)
 
     def can_move_to_pos(self, pos: Tuple[int, int]) -> bool:
         return self.is_valid_pos(pos) and (not self.stones[pos])
 
     def make_current_board_2D(self) -> np.ndarray:
-        board = np.zeros((self.size, self.size), dtype=np.float32)
+        board = np.zeros((self.board_size, self.board_size), dtype=np.float32)
         # set rocks
         for m, n in np.ndindex(self.stones.shape):
             board[(m, n)] = self.rock_val if self.stones[(m, n)] else self.empty_val
@@ -105,9 +107,9 @@ class BomberworldEnv(gym.Env):
         if self.reduced_obs: # cut 3x3 patch around agent
             m_ap, n_ap = self.agent_pos
             m_center = max(1, m_ap)
-            m_center = min(self.size-2, m_center)
+            m_center = min(self.board_size - 2, m_center)
             n_center = max(1, n_ap)
-            n_center = min(self.size - 2, n_center)
+            n_center = min(self.board_size - 2, n_center)
             return board[m_center-1:m_center+2, n_center-1:n_center+2]
         else:
             return board

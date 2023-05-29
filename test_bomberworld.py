@@ -21,8 +21,9 @@ class MyTestCase(unittest.TestCase):
 
         env = bomberworld.BomberworldEnv(size, maxst, indestructible_agent=indestr, dead_when_colliding=dc, move_penalty=movep, collision_penalty=collip,
                  bomb_penalty=bombp, close_bomb_penalty=closep, rock_reward=rockr, end_game_reward=endr, dead_near_bomb=dnb)
+        env.reset()
 
-        self.assertEqual(env.size, size)
+        self.assertEqual(env.board_size, size)
         self.assertEqual(env.max_steps, maxst)
         self.assertEqual(env.indestructible_agent, indestr)
         self.assertAlmostEqual(env.move_penalty, movep)
@@ -38,6 +39,7 @@ class MyTestCase(unittest.TestCase):
         # test function which checks if position is on the board
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
+        env.reset()
         for m in range(0, size):
             for n in range(0, size):
                 self.assertTrue(env.is_valid_pos((m, n)))
@@ -52,6 +54,7 @@ class MyTestCase(unittest.TestCase):
         # test function which checks if position is on the board
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
+        env.reset()
 
         # can move nowhere
         env.stones = np.full((size, size), True)
@@ -74,6 +77,7 @@ class MyTestCase(unittest.TestCase):
     def test_bomb_3x3(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
+        env.reset()
 
         # bomb upper left corner
         env.stones = np.full((size, size), True)
@@ -119,7 +123,8 @@ class MyTestCase(unittest.TestCase):
     def test_move_actions(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
-        env.set_initial_board((0,0))
+        env.reset()
+        env.set_initial_board(size, (0,0))
 
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
         obs, reward, _, stopped, dbg = env.step(0) # up not possible
@@ -169,7 +174,8 @@ class MyTestCase(unittest.TestCase):
     def test_bomb_actions(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
-        env.set_initial_board((0, 0))
+        env.reset()
+        env.set_initial_board(size, (0, 0))
 
         obs, reward, _, _, dbg = env.step(4)  # no rock bombed
         self.assertAlmostEqual(reward, env.bomb_penalty)
@@ -191,7 +197,8 @@ class MyTestCase(unittest.TestCase):
     def test_reach_target(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
-        env.set_initial_board((0, 0))
+        env.reset()
+        env.set_initial_board(size, (0, 0))
 
         # destroy all rocks except one
         env.stones.fill(False)
@@ -223,7 +230,8 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         for i in range(0, 7):
             _, r, terminated, _, _ = env.step(2) # down
@@ -275,7 +283,8 @@ class MyTestCase(unittest.TestCase):
     def test_destructable_agent(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         _, r, _, tc, dbg = env.step(4)  # bomb at (1,1) and stay there at detonation
         self.assertAlmostEqual(r, env.bomb_penalty)
@@ -344,7 +353,8 @@ class MyTestCase(unittest.TestCase):
     def test_if_bomb_on_field(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
         env.step(4)
         self.assertTrue(env.is_active_bomb_on_field((1,1)))
         self.assertFalse(env.is_active_bomb_on_field((0, 1)))
@@ -357,7 +367,8 @@ class MyTestCase(unittest.TestCase):
     def test_destructable_obs_bombs(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         self.assertEqual(env.agent_pos, (1,1))
         env.step(4) # drop bomb, agent and bomb in same spot
@@ -377,7 +388,8 @@ class MyTestCase(unittest.TestCase):
     def test_destructable_multiple_bombs(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 150, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         self.assertEqual(env.agent_pos, (1,1))
         env.step(4) # drop bomb, agent and bomb in same spot
@@ -399,7 +411,8 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         _, r, _, _, _ = env.step(2)  # down
         reward += r
@@ -699,7 +712,8 @@ class MyTestCase(unittest.TestCase):
     def test_destructable_dead_near_bomb_agent(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False, dead_near_bomb=True)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         _, r, _, tc, _ = env.step(4)  # bomb at (1,1) and stay there at detonation
         self.assertAlmostEqual(r, env.bomb_penalty)
@@ -720,7 +734,8 @@ class MyTestCase(unittest.TestCase):
     def test_dead_collision_agent(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, dead_when_colliding=True)
-        env.set_initial_board((0, 0))
+        env.reset()
+        env.set_initial_board(size, (0, 0))
 
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
         obs, reward, _, stopped, _ = env.step(0)  # up not possible -> agent dead
@@ -732,7 +747,8 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 4
         env = bomberworld.BomberworldEnv(size, 50)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         _, r, terminated, _, _ = env.step(2)  # down
         reward += r
@@ -771,7 +787,8 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 4
         env = bomberworld.BomberworldEnv(size, 50, reduced_obs=True)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         b = env.make_observation_2D()
 
@@ -813,7 +830,8 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, reduced_obs=True)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         for i in range(0, 7):
             _, r, terminated, _, _ = env.step(2) # down
@@ -861,7 +879,33 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(terminated)
         print(reward)
 
+    def test_mulitple_board_sizes(self):
+        # test function which checks if position is on the board
+        sizes = [5, 6, 7]
+        env = bomberworld.BomberworldEnv(sizes, 100, reduced_obs=True)
 
+        fiveOccured = False
+        sixOccured = False
+        sevenOccured = False
+
+        for k in range(0, 100): # check that all 3 sizes are used at least once.
+            env.reset()
+            the_size = env.board_size
+
+            self.assertTrue(the_size in sizes)
+
+            if the_size == 5:
+                fiveOccured = True
+
+            if the_size == 6:
+                sixOccured = True
+
+            if the_size == 7:
+                sevenOccured = True
+
+        self.assertTrue(fiveOccured)
+        self.assertTrue(sixOccured)
+        self.assertTrue(sevenOccured)
 
 if __name__ == '__main__':
     unittest.main()

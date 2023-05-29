@@ -18,7 +18,7 @@ def run_bombing(path_to_checkpoint: str, use_lstm: bool):
     env = bomberworld.BomberworldEnv(6, 60, dead_when_colliding=True, reduced_obs=True, indestructible_agent=False, dead_near_bomb=True)
     o, info = env.reset()
 
-    plotter = BomberworldPlotter(size=env.size, animated_gif_folder_path="gifs")
+    plotter = BomberworldPlotter(size=env.board_size, animated_gif_folder_path="gifs")
     plotter.add_frame(env.agent_pos, None, None, env.make_current_board_2D())
 
     reward_sum = 0
