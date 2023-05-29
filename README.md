@@ -11,6 +11,7 @@ The detonation destroys all rocks within a 3x3 square around the bomb, respectiv
 The agent gets a reward for each blasted rock and a special reward when all rocks are destroyed.
 On the other side, the agent gets a penalty when colliding with the walls or rocks, when planting a bomb and for each move.
 All these environment properties can be customized.
+
 <img src="https://github.com/eidelen/bomber/blob/main/rsc/explanation.png" width="460">
 
 
@@ -18,7 +19,18 @@ All these environment properties can be customized.
 In the simple bomber case, the bomb blasts immediatly after the agent plants the bomb.
 Therefore the agent does not get a penalty when being close to the blasts.
 I tried many different varations of learning, like agent dies or gets penalty when colliding with rocks and wall.
+
 <img src="https://github.com/eidelen/bomber/blob/main/rsc/simple-episode.gif" width="365">
+
+## The Reduced Simple Bomber
+The reduced simple bomber has the same properties as the above simple bomber. 
+But the reduced bomber agent only observes its surrounding fields - therefore the observation space is reduced to a patch of 3x3. 
+Following agent was trained on a 6x6 grid, but then also tested on an 8x8 and 10x10 play area.
+
+<img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-6x6.gif" width="300"><img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-8x8.gif" width="300"><img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-10x10.gif" width="300">
+
+Unlike the simple bomber, the model here uses an additional LSTM layer.
+One can see that the agent isn't performing great on unknown grid sizes. 
 
 
 ## Installation Notes
