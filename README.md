@@ -25,10 +25,11 @@ I tried many different varations of learning, like agent dies or gets penalty wh
 ## The Reduced Simple Bomber
 The reduced simple bomber has the same properties as the above simple bomber. 
 But the reduced bomber agent only observes its surrounding fields - therefore the observation space is reduced to a patch of 3x3. 
-Following agent was trained on a 6x6 grid, but then also tested on an 8x8 and 10x10 play area.
+This leads to a lack of knowledge for the agent, but also increases the learning speed and most importantly, one agent can be applied on different grid sizes.
 
 <img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-6x6.gif" width="300"><img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-8x8.gif" width="300"><img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-10x10.gif" width="300">
 
+Above agent was trained on a 6x6 grid, but then also tested on an 8x8 and 10x10 play area.
 Unlike the simple bomber, the model here uses an additional LSTM layer.
 One can see that the agent isn't performing great on unknown grid sizes. 
 
