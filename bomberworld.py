@@ -67,8 +67,29 @@ class BomberworldEnv(gym.Env):
 
         if type(self.size) is list: # randomly select a board size form the list
             self.board_size = self.size[randrange(len(self.size))]
+
+            # normalize penalties and rewards relative to first size in list
+            main_size = self.size[0]
+
+            print(self.board_size)
+
+            # reward = (total reward with main_size) / board_size
+            self.current_move_penalty = (self.move_penalty * (main_size ** 2)) / (self.board_size ** 2)
+            self.current_collision_penalty = (self.collision_penalty * (main_size ** 2)) / (self.board_size ** 2)
+            self.current_bomb_penalty = (self.bomb_penalty * (main_size ** 2)) / (self.board_size ** 2)
+            self.current_close_bomb_penalty = (self.close_bomb_penalty * (main_size ** 2)) / (self.board_size ** 2)
+            self.current_rock_reward = (self.rock_reward * (main_size ** 2)) / (self.board_size ** 2)
+            self.current_max_steps = (self.max_steps / (main_size ** 2)) * (self.board_size ** 2) # increase with board size
+            self.current_end_game_reward = self.end_game_reward # endgame reward independant of board size
         else:
             self.board_size = self.size
+            self.current_move_penalty = self.move_penalty
+            self.current_collision_penalty = self.collision_penalty
+            self.current_bomb_penalty = self.bomb_penalty
+            self.current_close_bomb_penalty = self.close_bomb_penalty
+            self.current_rock_reward = self.rock_reward
+            self.current_max_steps = self.max_steps
+            self.current_end_game_reward = self.end_game_reward  # endgame reward independant of board size
 
         self.set_initial_board(self.board_size, tuple(self.np_random.integers(low=0, high=self.board_size, size=2)))
         return self.make_observation(), {}
@@ -160,14 +181,14 @@ class BomberworldEnv(gym.Env):
 
             if self.can_move_to_pos(next_pos):
                 self.agent_pos = next_pos
-                reward += self.move_penalty # penalty for each move
+                reward += self.current_move_penalty # penalty for each move
             else:
-                reward += self.collision_penalty
+                reward += self.current_collision_penalty
                 if self.dead_when_colliding:
                     agent_killed = True
 
         elif action == 4: # drop bomb at agent location
-            reward += self.bomb_penalty  # penalty for each dropped bomb
+            reward += self.current_bomb_penalty  # penalty for each dropped bomb
             placed_bomb = self.agent_pos
             if self.indestructible_agent:
                 self.active_bombs.append((self.agent_pos, 0)) # immediate detonation
@@ -178,14 +199,14 @@ class BomberworldEnv(gym.Env):
         still_active_bombs = []
         for bomb_pos, step_timer in self.active_bombs:
             if step_timer <= 0:
-                reward += self.rock_reward * self.bomb_3x3(bomb_pos) # detonate bomb
+                reward += self.current_rock_reward * self.bomb_3x3(bomb_pos) # detonate bomb
                 exploded_bomb = bomb_pos
 
                 if not self.indestructible_agent:
                     # check that agent is in safe distance
                     squared_dist = (bomb_pos[0]-self.agent_pos[0])**2 + (bomb_pos[1]-self.agent_pos[1])**2
                     if squared_dist < 4.0:
-                        reward += self.close_bomb_penalty
+                        reward += self.current_close_bomb_penalty
                         if self.dead_near_bomb:
                             agent_killed = True
             else:
@@ -195,12 +216,12 @@ class BomberworldEnv(gym.Env):
 
         # mission completed when every rock was bombed
         if (self.stones == False).all():
-            reward += self.end_game_reward
+            reward += self.current_end_game_reward
             terminated = True
         else:
             terminated = False
 
-        if self.current_step > self.max_steps or agent_killed: # end game when max step reached or agent killed
+        if self.current_step > self.current_max_steps or agent_killed: # end game when max step reached or agent killed
             truncate = True
         else:
             truncate = False
