@@ -64,7 +64,7 @@ def grid_search_hypers(env_params: dict, nn_model: list, activation: str, desc: 
             local_dir="out",
             verbose=2,
             stop=MaximumIterationStopper(100000),
-            checkpoint_config=air.CheckpointConfig(checkpoint_frequency=50)
+            checkpoint_config=air.CheckpointConfig(checkpoint_frequency=200)
         )
     )
 
@@ -89,16 +89,16 @@ if __name__ == '__main__':
     if True:
 
         # train hw:
-        hw = {"gpu": 0, "cpu": 3} # imac
-        #hw = {"gpu": 1, "cpu": 11}  # adris
+        #hw = {"gpu": 0, "cpu": 3} # imac
+        hw = {"gpu": 1, "cpu": 11}  # adris
 
-        env_params = {"size": [6, 8, 10], "max_steps": 40, "reduced_obs": True, "dead_when_colliding": True}
+        env_params = {"size": [6, 8], "max_steps": 40, "reduced_obs": True, "dead_when_colliding": True}
         #env_params = {"size": 6, "max_steps": 60, "reduced_obs": True, "dead_when_colliding": True, "indestructible_agent": False, "dead_near_bomb": True}
         #env_params = {"size": 10, "max_steps": 100, "indestructible_agent": False, "dead_near_bomb": True}
         # env_params = {"size": 10, "max_steps": 200, "dead_when_colliding": True, "dead_near_bomb": True, "indestructible_agent": False, "close_bomb_penalty": -1.0}
         nn_model = [256, 128, 64]
         activation = "relu"
-        description = "ReducedSmartBomber-6,8,10x6,8,10-Gamma=0.75-LSTM"
+        description = "ReducedSmartBomber-6to8x6to8-Gamma=0.75-LSTM"
 
         grid_search_hypers(env_params, nn_model, activation, description, hw, use_lstm=True)
 

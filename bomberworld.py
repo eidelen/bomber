@@ -71,8 +71,6 @@ class BomberworldEnv(gym.Env):
             # normalize penalties and rewards relative to first size in list
             main_size = self.size[0]
 
-            print(self.board_size)
-
             # reward = (total reward with main_size) / board_size
             self.current_move_penalty = (self.move_penalty * (main_size ** 2)) / (self.board_size ** 2)
             self.current_collision_penalty = (self.collision_penalty * (main_size ** 2)) / (self.board_size ** 2)

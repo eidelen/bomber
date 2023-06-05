@@ -29,6 +29,7 @@ class BomberworldPlotter:
         self.ordered_file_list = []
         self.agent_traj: List[Tuple[int, int]] = []
         self.bomb_traj: List[Tuple[int, int]] = []
+        self.current_agent_pos: Tuple[int, int] = (0,0)
         self.stones: np.ndarray = np.zeros((self.size, self.size), dtype=np.float32)
         self.explosion: Tuple[int, int] = None
         self.agent_shape = [[.2, .6], [.2, .3], [.3, .1], [.7, .1], [.8, .3], [.8, .6]]
@@ -36,6 +37,7 @@ class BomberworldPlotter:
     def add_frame(self, agent_position: Tuple[int, int], placed_bomb: Tuple[int, int], exploded_bomb: Tuple[int, int], stones: np.ndarray ) -> None:
         if placed_bomb is None:
             self.agent_traj.append(agent_position)
+            self.current_agent_pos = agent_position
         else:
             self.bomb_traj.append(placed_bomb) # bomb placed -> agent did not move
 
@@ -48,6 +50,7 @@ class BomberworldPlotter:
         self.draw_grid(ax)
 
         self.draw_stones(ax, self.stones)
+        self.draw_current_agent_pos(ax, self.current_agent_pos)
         self.draw_path(ax, self.agent_traj, color='red', line_width=1)
         self.draw_bombs(ax, self.bomb_traj)
         self.draw_agent(ax, self.agent_traj[0][0], self.agent_traj[0][1])
@@ -101,6 +104,11 @@ class BomberworldPlotter:
             for n in range(0, ns):
                 if stones[(m,n)] < 0.1:
                     ax.add_patch(patches.Rectangle((n+0.125, m+0.125), width=0.75, height=0.75, ec='black', fc='grey', fill=True))
+
+    @staticmethod
+    def draw_current_agent_pos(ax: mpl.axes.Axes, pos: Tuple[int, int]):
+        m, n = pos
+        ax.add_patch(patches.Rectangle((n + 0.1, m + 0.1), width=0.8, height=0.8, ec='red', fc='red', fill=False, linewidth=6.0))
 
     def draw_grid(self, ax: mpl.axes.Axes):
         for i in range(self.size + 1):
