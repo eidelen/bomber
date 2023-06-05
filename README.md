@@ -27,12 +27,22 @@ The reduced simple bomber has the same properties as the above simple bomber.
 But the reduced bomber agent only observes its surrounding fields - therefore the observation space is reduced to a patch of 3x3. 
 This leads to a lack of knowledge for the agent, but also increases the learning speed and most importantly, one agent can be applied on different grid sizes.
 
-<img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-6x6.gif" width="300"><img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-8x8.gif" width="300"><img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-10x10.gif" width="300">
+<img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-6x6.gif" width="270"><img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-8x8.gif" width="270"><img src="https://github.com/eidelen/bomber/blob/main/rsc/trained6x6-put-10x10.gif" width="270">
 
-Above agent was trained on a 6x6 grid, but then also tested on an 8x8 and 10x10 play area.
+Above agent was trained on a **6x6 grid**, but then also tested on an 8x8 and 10x10 play area.
 Unlike the simple bomber, the model here uses an additional LSTM layer.
 One can see that the agent isn't performing great on unknown grid sizes. 
 
+Next step was to train the agent with reduced observation space on different gird sizes. 
+In particular, below agent was trained on randomly selected **6x6 grids** and **8x8 grid**.
+This resulted in much better performance on unknown grid. 
+
+<img src="https://github.com/eidelen/bomber/blob/main/rsc/6,8x6,8-trained-6x6.gif" width="270"><img src="https://github.com/eidelen/bomber/blob/main/rsc/6,8x6,8-trained-7x7.gif" width="270"><img src="https://github.com/eidelen/bomber/blob/main/rsc/6,8x6,8-trained-8x8.gif" width="270"><img src="https://github.com/eidelen/bomber/blob/main/rsc/6,8x6,8-trained-9x9.gif" width="270"><img src="https://github.com/eidelen/bomber/blob/main/rsc/6,8x6,8-trained-10x10.gif" width="270"><img src="https://github.com/eidelen/bomber/blob/main/rsc/6,8x6,8-trained-12x12.gif" width="270">
+
+Even on ultra large grids the agent performs not bad.
+However, it suddenly makes a stupid mistake in an actual easy situation.
+
+<img src="https://github.com/eidelen/bomber/blob/main/rsc/6,8x6,8-trained-20x20.gif" width="450">
 
 ## Installation Notes
 ### Windows (Python 3.9 and 3.10)
