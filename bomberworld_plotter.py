@@ -51,8 +51,8 @@ class BomberworldPlotter:
 
         self.draw_stones(ax, self.stones)
         self.draw_current_agent_pos(ax, self.current_agent_pos)
-        self.draw_path(ax, self.agent_traj, color='red', line_width=1)
-        self.draw_bombs(ax, self.bomb_traj)
+        #self.draw_path(ax, self.agent_traj, color='red', line_width=1)
+        #self.draw_bombs(ax, self.bomb_traj)
         self.draw_agent(ax, self.agent_traj[0][0], self.agent_traj[0][1])
         self.draw_explosion(ax, self.explosion)
 
@@ -87,7 +87,7 @@ class BomberworldPlotter:
         index = 0
         for m, n in bombs:
             ax.add_patch(patches.Ellipse((n+0.5, m+0.5), width=0.8, height=0.8, ec="black", fill=False))
-            ax.text(n+0.3, m+0.6, str(index))
+            #ax.text(n+0.3, m+0.6, str(index))
             index += 1
 
     @staticmethod
@@ -137,7 +137,7 @@ class BomberworldPlotter:
             frames[0].save(gif_out_path, format='GIF',
                            append_images=frames[1:],
                            save_all=True,
-                           duration=300, loop=0)
+                           duration=75, loop=0)
             print("Animated gif created, nbr imgs:", len(frames))
         else:
             print("Error: animated_gif_folder_path needs to be set in ctor")
