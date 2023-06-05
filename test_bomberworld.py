@@ -21,16 +21,17 @@ class MyTestCase(unittest.TestCase):
 
         env = bomberworld.BomberworldEnv(size, maxst, indestructible_agent=indestr, dead_when_colliding=dc, move_penalty=movep, collision_penalty=collip,
                  bomb_penalty=bombp, close_bomb_penalty=closep, rock_reward=rockr, end_game_reward=endr, dead_near_bomb=dnb)
+        env.reset()
 
-        self.assertEqual(env.size, size)
-        self.assertEqual(env.max_steps, maxst)
+        self.assertEqual(env.board_size, size)
+        self.assertEqual(env.current_max_steps, maxst)
         self.assertEqual(env.indestructible_agent, indestr)
-        self.assertAlmostEqual(env.move_penalty, movep)
-        self.assertAlmostEqual(env.collision_penalty, collip)
-        self.assertAlmostEqual(env.bomb_penalty, bombp)
-        self.assertAlmostEqual(env.close_bomb_penalty, closep)
-        self.assertAlmostEqual(env.rock_reward, rockr)
-        self.assertAlmostEqual(env.end_game_reward, endr)
+        self.assertAlmostEqual(env.current_move_penalty, movep)
+        self.assertAlmostEqual(env.current_collision_penalty, collip)
+        self.assertAlmostEqual(env.current_bomb_penalty, bombp)
+        self.assertAlmostEqual(env.current_close_bomb_penalty, closep)
+        self.assertAlmostEqual(env.current_rock_reward, rockr)
+        self.assertAlmostEqual(env.current_end_game_reward, endr)
         self.assertAlmostEqual(env.dead_near_bomb, dnb)
         self.assertAlmostEqual(env.dead_when_colliding, dc)
 
@@ -38,6 +39,7 @@ class MyTestCase(unittest.TestCase):
         # test function which checks if position is on the board
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
+        env.reset()
         for m in range(0, size):
             for n in range(0, size):
                 self.assertTrue(env.is_valid_pos((m, n)))
@@ -52,6 +54,7 @@ class MyTestCase(unittest.TestCase):
         # test function which checks if position is on the board
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
+        env.reset()
 
         # can move nowhere
         env.stones = np.full((size, size), True)
@@ -74,6 +77,7 @@ class MyTestCase(unittest.TestCase):
     def test_bomb_3x3(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
+        env.reset()
 
         # bomb upper left corner
         env.stones = np.full((size, size), True)
@@ -119,60 +123,62 @@ class MyTestCase(unittest.TestCase):
     def test_move_actions(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
-        env.set_initial_board((0,0))
+        env.reset()
+        env.set_initial_board(size, (0,0))
 
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
         obs, reward, _, stopped, dbg = env.step(0) # up not possible
-        self.assertAlmostEqual(reward, env.collision_penalty)
+        self.assertAlmostEqual(reward, env.current_collision_penalty)
         self.assertAlmostEqual(env.make_observation_2D()[(0,0)], env.agent_val)
         self.assertIsNone(dbg["placed_bomb"])
         self.assertIsNone(dbg["exploded_bomb"])
         self.assertFalse(stopped)
 
         obs, reward, _, stopped, _ = env.step(3)  # left not possible
-        self.assertAlmostEqual(reward, env.collision_penalty)
+        self.assertAlmostEqual(reward, env.current_collision_penalty)
         self.assertFalse(stopped)
 
         obs, reward, _, stopped, _ = env.step(1)  # right possible
-        self.assertAlmostEqual(reward, env.move_penalty)
+        self.assertAlmostEqual(reward, env.current_move_penalty)
         self.assertEqual(env.agent_pos, (0,1))
         self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.empty_val) # previous field empty
         self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.agent_val) # current field agent
         self.assertFalse(stopped)
 
         obs, reward, _, _, _ = env.step(1)  # right again not possible
-        self.assertAlmostEqual(reward, env.collision_penalty)
+        self.assertAlmostEqual(reward, env.current_collision_penalty)
         self.assertEqual(env.agent_pos, (0, 1))
 
         obs, reward, _, _, _ = env.step(2)  # down possible
-        self.assertAlmostEqual(reward, env.move_penalty)
+        self.assertAlmostEqual(reward, env.current_move_penalty)
         self.assertEqual(env.agent_pos, (1, 1))
         self.assertAlmostEqual(env.make_observation_2D()[(0, 1)], env.empty_val)  # previous field empty
         self.assertAlmostEqual(env.make_observation_2D()[(1, 1)], env.agent_val)  # current field agent
 
         obs, reward, _, _, _ = env.step(2)  # down again not possible
-        self.assertAlmostEqual(reward, env.collision_penalty)
+        self.assertAlmostEqual(reward, env.current_collision_penalty)
         self.assertEqual(env.agent_pos, (1, 1))
 
         obs, reward, _, _, _ = env.step(3)  # left possible
-        self.assertAlmostEqual(reward, env.move_penalty)
+        self.assertAlmostEqual(reward, env.current_move_penalty)
         self.assertEqual(env.agent_pos, (1, 0))
 
         obs, reward, _, _, _ = env.step(3)  # left again not possible
-        self.assertAlmostEqual(reward, env.collision_penalty)
+        self.assertAlmostEqual(reward, env.current_collision_penalty)
         self.assertEqual(env.agent_pos, (1, 0))
 
         obs, reward, _, _, _ = env.step(0)  # up possible
-        self.assertAlmostEqual(reward, env.move_penalty)
+        self.assertAlmostEqual(reward, env.current_move_penalty)
         self.assertEqual(env.agent_pos, (0, 0))
 
     def test_bomb_actions(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
-        env.set_initial_board((0, 0))
+        env.reset()
+        env.set_initial_board(size, (0, 0))
 
         obs, reward, _, _, dbg = env.step(4)  # no rock bombed
-        self.assertAlmostEqual(reward, env.bomb_penalty)
+        self.assertAlmostEqual(reward, env.current_bomb_penalty)
         self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.agent_val)
         # check debug output
         self.assertIsNotNone(dbg["placed_bomb"])
@@ -182,27 +188,28 @@ class MyTestCase(unittest.TestCase):
 
         obs, reward, _, _, _ = env.step(1) # move to (0,1)
         obs, reward, _, _, _ = env.step(4)  # 2 rocks bombed
-        self.assertAlmostEqual(reward, env.bomb_penalty+2*env.rock_reward)
+        self.assertAlmostEqual(reward, env.current_bomb_penalty + 2 * env.current_rock_reward)
 
         obs, reward, _, _, _ = env.step(2)  # move to (1,1)
         obs, reward, _, _, _ = env.step(4)  # 3 rocks bombed
-        self.assertAlmostEqual(reward, env.bomb_penalty+3*env.rock_reward)
+        self.assertAlmostEqual(reward, env.current_bomb_penalty + 3 * env.current_rock_reward)
 
     def test_reach_target(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
-        env.set_initial_board((0, 0))
+        env.reset()
+        env.set_initial_board(size, (0, 0))
 
         # destroy all rocks except one
         env.stones.fill(False)
         env.stones[(0, 1)] = True
 
         obs, reward, terminated, _, _ = env.step(2)  # down
-        self.assertAlmostEqual(reward, env.move_penalty)
+        self.assertAlmostEqual(reward, env.current_move_penalty)
         self.assertFalse(terminated)
 
         obs, reward, terminated, _, _ = env.step(4)  # bomb and all is destroyed
-        self.assertAlmostEqual(reward, env.end_game_reward)
+        self.assertAlmostEqual(reward, env.current_end_game_reward)
         self.assertTrue(terminated)
 
     def test_reach_max(self):
@@ -223,7 +230,8 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 10
         env = bomberworld.BomberworldEnv(size, 100)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         for i in range(0, 7):
             _, r, terminated, _, _ = env.step(2) # down
@@ -275,10 +283,11 @@ class MyTestCase(unittest.TestCase):
     def test_destructable_agent(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         _, r, _, tc, dbg = env.step(4)  # bomb at (1,1) and stay there at detonation
-        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertAlmostEqual(r, env.current_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         self.assertFalse(tc)
         # check debug output
@@ -287,7 +296,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(dbg["placed_bomb"], (1, 1))
 
         _, r, _, tc, dbg = env.step(0)  # up
-        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertAlmostEqual(r, env.current_move_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         self.assertFalse(tc)
         # check debug output
@@ -296,7 +305,7 @@ class MyTestCase(unittest.TestCase):
 
         _, r, _, tc, dbg = env.step(2)  # down and bomb detonates
         self.assertEqual(env.agent_pos, (1,1))
-        self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
+        self.assertAlmostEqual(r, env.current_move_penalty + env.current_close_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 0)
         self.assertFalse(tc)
         # check debug output
@@ -305,46 +314,47 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(dbg["exploded_bomb"], (1, 1))
 
         _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay (0,0) at detonation
-        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertAlmostEqual(r, env.current_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         _, r, _, _, _ = env.step(0)  # up
-        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertAlmostEqual(r, env.current_move_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         _, r, _, _, _ = env.step(3)  # left and bomb detonates
         self.assertEqual(env.agent_pos, (0, 0))
-        self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
+        self.assertAlmostEqual(r, env.current_move_penalty + env.current_close_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 0)
 
         env.step(2)
         env.step(1)
         _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay (2,2) at detonation
-        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertAlmostEqual(r, env.current_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         _, r, _, _, _ = env.step(2)  # down
-        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertAlmostEqual(r, env.current_move_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         _, r, _, _, _ = env.step(1)  # right and bomb detonates
         self.assertEqual(env.agent_pos, (2, 2))
-        self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
+        self.assertAlmostEqual(r, env.current_move_penalty + env.current_close_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 0)
 
         # drop bomb at (2,2) and go to safe place (0,2)
         _, r, _, _, _ = env.step(4)  # bomb at (1,1) and stay (2,2) at detonation
-        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertAlmostEqual(r, env.current_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         _, r, _, _, _ = env.step(0)  # up
-        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertAlmostEqual(r, env.current_move_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         _, r, _, _, _ = env.step(0)  # up
         self.assertEqual(env.agent_pos, (0, 2))
-        self.assertAlmostEqual(r, env.move_penalty + 5 * env.rock_reward)
+        self.assertAlmostEqual(r, env.current_move_penalty + 5 * env.current_rock_reward)
         self.assertEqual(len(env.active_bombs), 0)
 
 
     def test_if_bomb_on_field(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
         env.step(4)
         self.assertTrue(env.is_active_bomb_on_field((1,1)))
         self.assertFalse(env.is_active_bomb_on_field((0, 1)))
@@ -357,7 +367,8 @@ class MyTestCase(unittest.TestCase):
     def test_destructable_obs_bombs(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         self.assertEqual(env.agent_pos, (1,1))
         env.step(4) # drop bomb, agent and bomb in same spot
@@ -377,7 +388,8 @@ class MyTestCase(unittest.TestCase):
     def test_destructable_multiple_bombs(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 150, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         self.assertEqual(env.agent_pos, (1,1))
         env.step(4) # drop bomb, agent and bomb in same spot
@@ -399,7 +411,8 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         _, r, _, _, _ = env.step(2)  # down
         reward += r
@@ -410,7 +423,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(0)  # up
         reward += r
 
-        self.assertAlmostEqual(3*env.move_penalty + 1 * env.bomb_penalty + 3.0*env.rock_reward, reward)
+        self.assertAlmostEqual(3 * env.current_move_penalty + 1 * env.current_bomb_penalty + 3.0 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(2)  # down
         reward += r
@@ -418,26 +431,26 @@ class MyTestCase(unittest.TestCase):
         reward += r
         _, r, _, _, _ = env.step(4)  # bomb
         reward += r
-        self.assertAlmostEqual(5 * env.move_penalty + 2 * env.bomb_penalty + 3.0*env.rock_reward, reward)
+        self.assertAlmostEqual(5 * env.current_move_penalty + 2 * env.current_bomb_penalty + 3.0 * env.current_rock_reward, reward)
         _, r, _, _, _ = env.step(2)  # down
         reward += r
         _, r, _, _, _ = env.step(2)  # down
         reward += r
 
-        self.assertAlmostEqual(7 * env.move_penalty + 2 * env.bomb_penalty + 6.0*env.rock_reward, reward)
+        self.assertAlmostEqual(7 * env.current_move_penalty + 2 * env.current_bomb_penalty + 6.0 * env.current_rock_reward, reward)
         self.assertEqual(len(env.active_bombs), 0)
 
         _, r, _, _, _ = env.step(4)  # bomb + previous bomb explodes
-        self.assertAlmostEqual(env.bomb_penalty, r)
+        self.assertAlmostEqual(env.current_bomb_penalty, r)
         reward += r
         _, r, _, _, _ = env.step(3)  # left
-        self.assertAlmostEqual(env.move_penalty, r)
+        self.assertAlmostEqual(env.current_move_penalty, r)
         reward += r
         _, r, _, _, _ = env.step(3)  # left + bomb exploding
-        self.assertAlmostEqual(env.move_penalty+4*env.rock_reward, r)
+        self.assertAlmostEqual(env.current_move_penalty + 4 * env.current_rock_reward, r)
         reward += r
 
-        self.assertAlmostEqual(9 * env.move_penalty + 3 * env.bomb_penalty + 10.0*env.rock_reward, reward)
+        self.assertAlmostEqual(9 * env.current_move_penalty + 3 * env.current_bomb_penalty + 10.0 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(1)  # right
         reward += r
@@ -450,7 +463,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(1)  # right
         reward += r
 
-        self.assertAlmostEqual(13 * env.move_penalty + 4 * env.bomb_penalty + 14.0 * env.rock_reward, reward)
+        self.assertAlmostEqual(13 * env.current_move_penalty + 4 * env.current_bomb_penalty + 14.0 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(4)  # bomb
         reward += r
@@ -461,7 +474,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(0)  # up
         reward += r
 
-        self.assertAlmostEqual(16 * env.move_penalty + 5 * env.bomb_penalty + 18.0 * env.rock_reward, reward)
+        self.assertAlmostEqual(16 * env.current_move_penalty + 5 * env.current_bomb_penalty + 18.0 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(4)  # bomb
         reward += r
@@ -482,7 +495,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(0)  # up
         reward += r
 
-        self.assertAlmostEqual(23 * env.move_penalty + 7 * env.bomb_penalty + 26.0 * env.rock_reward, reward)
+        self.assertAlmostEqual(23 * env.current_move_penalty + 7 * env.current_bomb_penalty + 26.0 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(2)  # down
         reward += r
@@ -499,7 +512,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(0)  # up
         reward += r
 
-        self.assertAlmostEqual(29 * env.move_penalty + 8 * env.bomb_penalty + 31.0 * env.rock_reward, reward)
+        self.assertAlmostEqual(29 * env.current_move_penalty + 8 * env.current_bomb_penalty + 31.0 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(4)  # bomb
         reward += r
@@ -518,7 +531,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(0)  # up
         reward += r
 
-        self.assertAlmostEqual(35 * env.move_penalty + 10 * env.bomb_penalty + 39.0 * env.rock_reward, reward)
+        self.assertAlmostEqual(35 * env.current_move_penalty + 10 * env.current_bomb_penalty + 39.0 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(0)  # up
         reward += r
@@ -542,7 +555,7 @@ class MyTestCase(unittest.TestCase):
         reward += r
 
 
-        self.assertAlmostEqual(43 * env.move_penalty + 12 * env.bomb_penalty + 48 * env.rock_reward, reward)
+        self.assertAlmostEqual(43 * env.current_move_penalty + 12 * env.current_bomb_penalty + 48 * env.current_rock_reward, reward)
 
 
         _, r, _, _, _ = env.step(4)  # bomb
@@ -560,7 +573,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(1)  # right
         reward += r
 
-        self.assertAlmostEqual(48 * env.move_penalty + 14 * env.bomb_penalty + 55 * env.rock_reward, reward)
+        self.assertAlmostEqual(48 * env.current_move_penalty + 14 * env.current_bomb_penalty + 55 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(4)  # bomb
         reward += r
@@ -577,7 +590,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(3)  # left
         reward += r
 
-        self.assertAlmostEqual(53 * env.move_penalty + 16 * env.bomb_penalty + 62 * env.rock_reward, reward)
+        self.assertAlmostEqual(53 * env.current_move_penalty + 16 * env.current_bomb_penalty + 62 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(1)  # right
         reward += r
@@ -594,7 +607,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(3)  # left
         reward += r
 
-        self.assertAlmostEqual(59 * env.move_penalty + 17 * env.bomb_penalty + 67 * env.rock_reward, reward)
+        self.assertAlmostEqual(59 * env.current_move_penalty + 17 * env.current_bomb_penalty + 67 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(1)  # right
         reward += r
@@ -607,7 +620,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(1)  # right
         reward += r
 
-        self.assertAlmostEqual(63 * env.move_penalty + 18 * env.bomb_penalty + 71 * env.rock_reward, reward)
+        self.assertAlmostEqual(63 * env.current_move_penalty + 18 * env.current_bomb_penalty + 71 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(4)  # bomb
         reward += r
@@ -616,7 +629,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(2)  # down
         reward += r
 
-        self.assertAlmostEqual(65 * env.move_penalty + 19 * env.bomb_penalty + 75 * env.rock_reward, reward)
+        self.assertAlmostEqual(65 * env.current_move_penalty + 19 * env.current_bomb_penalty + 75 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(4)  # bomb
         reward += r
@@ -628,23 +641,6 @@ class MyTestCase(unittest.TestCase):
         reward += r
         _, r, _, _, _ = env.step(3)  # left
         reward += r
-        _, r, _, _, _ = env.step(3)  # left
-        reward += r
-        _, r, _, _, _ = env.step(2)  # down
-        reward += r
-        _, r, _, _, _ = env.step(2)  # down
-        reward += r
-        _, r, _, _, _ = env.step(2)  # down
-        reward += r
-        _, r, _, _, _ = env.step(4)  # bomb
-        reward += r
-        _, r, _, _, _ = env.step(0)  # up
-        reward += r
-        _, r, _, _, _ = env.step(0)  # up
-        reward += r
-
-        self.assertAlmostEqual(75 * env.move_penalty + 21 * env.bomb_penalty + 79 * env.rock_reward, reward)
-
         _, r, _, _, _ = env.step(3)  # left
         reward += r
         _, r, _, _, _ = env.step(2)  # down
@@ -660,7 +656,24 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(0)  # up
         reward += r
 
-        self.assertAlmostEqual(81 * env.move_penalty + 22 * env.bomb_penalty + 84 * env.rock_reward, reward)
+        self.assertAlmostEqual(75 * env.current_move_penalty + 21 * env.current_bomb_penalty + 79 * env.current_rock_reward, reward)
+
+        _, r, _, _, _ = env.step(3)  # left
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(2)  # down
+        reward += r
+        _, r, _, _, _ = env.step(4)  # bomb
+        reward += r
+        _, r, _, _, _ = env.step(0)  # up
+        reward += r
+        _, r, _, _, _ = env.step(0)  # up
+        reward += r
+
+        self.assertAlmostEqual(81 * env.current_move_penalty + 22 * env.current_bomb_penalty + 84 * env.current_rock_reward, reward)
 
         _, r, _, _, _ = env.step(3)  # left
         reward += r
@@ -679,7 +692,7 @@ class MyTestCase(unittest.TestCase):
         _, r, _, _, _ = env.step(1)  # right
         reward += r
 
-        self.assertAlmostEqual(87 * env.move_penalty + 24 * env.bomb_penalty + 90 * env.rock_reward, reward)
+        self.assertAlmostEqual(87 * env.current_move_penalty + 24 * env.current_bomb_penalty + 90 * env.current_rock_reward, reward)
 
         _, r, terminated, _, _ = env.step(4)  # bomb
         self.assertFalse(terminated)
@@ -691,7 +704,7 @@ class MyTestCase(unittest.TestCase):
         reward += r
         self.assertTrue(terminated)
 
-        self.assertAlmostEqual(89 * env.move_penalty + 25 * env.bomb_penalty + 91 * env.rock_reward + env.end_game_reward, reward)
+        self.assertAlmostEqual(89 * env.current_move_penalty + 25 * env.current_bomb_penalty + 91 * env.current_rock_reward + env.current_end_game_reward, reward)
 
         print(reward)
 
@@ -699,32 +712,34 @@ class MyTestCase(unittest.TestCase):
     def test_destructable_dead_near_bomb_agent(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, indestructible_agent=False, dead_near_bomb=True)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         _, r, _, tc, _ = env.step(4)  # bomb at (1,1) and stay there at detonation
-        self.assertAlmostEqual(r, env.bomb_penalty)
+        self.assertAlmostEqual(r, env.current_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         self.assertFalse(tc)
 
         _, r, _, tc, _ = env.step(0)  # up
-        self.assertAlmostEqual(r, env.move_penalty)
+        self.assertAlmostEqual(r, env.current_move_penalty)
         self.assertEqual(len(env.active_bombs), 1)
         self.assertFalse(tc)
 
         _, r, _, tc, _ = env.step(2)  # down and bomb detonates
         self.assertEqual(env.agent_pos, (1,1))
-        self.assertAlmostEqual(r, env.move_penalty + env.close_bomb_penalty)
+        self.assertAlmostEqual(r, env.current_move_penalty + env.current_close_bomb_penalty)
         self.assertEqual(len(env.active_bombs), 0)
         self.assertTrue(tc)
 
     def test_dead_collision_agent(self):
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, dead_when_colliding=True)
-        env.set_initial_board((0, 0))
+        env.reset()
+        env.set_initial_board(size, (0, 0))
 
         # agent at (0,0) -> can initially move only to 3 bording squares. Others are rocks or wall.
         obs, reward, _, stopped, _ = env.step(0)  # up not possible -> agent dead
-        self.assertAlmostEqual(reward, env.collision_penalty)
+        self.assertAlmostEqual(reward, env.current_collision_penalty)
         self.assertAlmostEqual(env.make_observation_2D()[(0, 0)], env.agent_val)
         self.assertTrue(stopped)
 
@@ -732,20 +747,21 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 4
         env = bomberworld.BomberworldEnv(size, 50)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         _, r, terminated, _, _ = env.step(2)  # down
         reward += r
         _, r, terminated, _, _ = env.step(4)  # bomb
         reward += r
-        self.assertAlmostEqual(1 * env.move_penalty + 1 * env.bomb_penalty + 3 * env.rock_reward, reward)
+        self.assertAlmostEqual(1 * env.current_move_penalty + 1 * env.current_bomb_penalty + 3 * env.current_rock_reward, reward)
         self.assertFalse(terminated)
 
         _, r, terminated, _, _ = env.step(1)  # right
         reward += r
         _, r, terminated, _, _ = env.step(4)  # bomb
         reward += r
-        self.assertAlmostEqual(2 * env.move_penalty + 2 * env.bomb_penalty + 6 * env.rock_reward, reward)
+        self.assertAlmostEqual(2 * env.current_move_penalty + 2 * env.current_bomb_penalty + 6 * env.current_rock_reward, reward)
         self.assertFalse(terminated)
 
         # try to leave area
@@ -754,14 +770,14 @@ class MyTestCase(unittest.TestCase):
         _, r, terminated, _, _ = env.step(1)  # not possible right
         reward += r
 
-        self.assertAlmostEqual(3 * env.move_penalty + 1 * env.collision_penalty + 2 * env.bomb_penalty + 6 * env.rock_reward, reward)
+        self.assertAlmostEqual(3 * env.current_move_penalty + 1 * env.current_collision_penalty + 2 * env.current_bomb_penalty + 6 * env.current_rock_reward, reward)
         self.assertFalse(terminated)
 
         _, r, terminated, _, _ = env.step(0)  # up
         reward += r
         _, r, terminated, _, _ = env.step(4)  # bomb
         reward += r
-        self.assertAlmostEqual(4 * env.move_penalty + 1 * env.collision_penalty + 3 * env.bomb_penalty + 7 * env.rock_reward + env.end_game_reward, reward)
+        self.assertAlmostEqual(4 * env.current_move_penalty + 1 * env.current_collision_penalty + 3 * env.current_bomb_penalty + 7 * env.current_rock_reward + env.current_end_game_reward, reward)
         self.assertTrue(terminated)
 
         print(env.make_observation_2D())
@@ -771,7 +787,8 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 4
         env = bomberworld.BomberworldEnv(size, 50, reduced_obs=True)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         b = env.make_observation_2D()
 
@@ -813,7 +830,8 @@ class MyTestCase(unittest.TestCase):
         reward = 0.0
         size = 10
         env = bomberworld.BomberworldEnv(size, 100, reduced_obs=True)
-        env.set_initial_board((1, 1))
+        env.reset()
+        env.set_initial_board(size, (1, 1))
 
         for i in range(0, 7):
             _, r, terminated, _, _ = env.step(2) # down
@@ -861,7 +879,68 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(terminated)
         print(reward)
 
+    def test_mulitple_board_sizes(self):
+        # test function which checks if position is on the board
+        sizes = [5, 6, 7]
+        env = bomberworld.BomberworldEnv(sizes, 100, reduced_obs=True)
 
+        fiveOccured = False
+        sixOccured = False
+        sevenOccured = False
+
+        rock_rewards = [None, None, None]
+        move_penalties = [None, None, None]
+        bomb_penalties = [None, None, None]
+        end_game_rewards = [None, None, None]
+        max_steps = [None, None, None]
+
+        for k in range(0, 100): # check that all 3 sizes are used at least once.
+            env.reset()
+            the_size = env.board_size
+
+            self.assertTrue(the_size in sizes)
+
+            if the_size == 5:
+                fiveOccured = True
+                rock_rewards[0] = env.current_rock_reward
+                move_penalties[0] = env.current_move_penalty
+                bomb_penalties[0] = env.current_bomb_penalty
+                end_game_rewards[0] = env.current_end_game_reward
+                max_steps[0] = env.current_max_steps
+
+            if the_size == 6:
+                sixOccured = True
+                rock_rewards[1] = env.current_rock_reward
+                move_penalties[1] = env.current_move_penalty
+                bomb_penalties[1] = env.current_bomb_penalty
+                end_game_rewards[1] = env.current_end_game_reward
+                max_steps[1] = env.current_max_steps
+
+            if the_size == 7:
+                sevenOccured = True
+                rock_rewards[2] = env.current_rock_reward
+                move_penalties[2] = env.current_move_penalty
+                bomb_penalties[2] = env.current_bomb_penalty
+                end_game_rewards[2] = env.current_end_game_reward
+                max_steps[2] = env.current_max_steps
+
+        self.assertTrue(fiveOccured)
+        self.assertTrue(sixOccured)
+        self.assertTrue(sevenOccured)
+
+        # smaller board size rewards must be bigger
+        for li in [rock_rewards, move_penalties, bomb_penalties]:
+            val_before = 10000000000
+            for k in li:
+                self.assertGreater(abs(val_before), abs(k))
+                val_before = k
+
+        self.assertAlmostEqual(end_game_rewards[0], end_game_rewards[1])
+        self.assertAlmostEqual(end_game_rewards[0], end_game_rewards[2])
+
+        # increasing max steps
+        self.assertLess(max_steps[0], max_steps[1])
+        self.assertLess(max_steps[1], max_steps[2])
 
 if __name__ == '__main__':
     unittest.main()
