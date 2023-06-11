@@ -63,7 +63,7 @@ def grid_search_hypers(env_params: dict, nn_model: list, activation: str, desc: 
             name=experiment_name,
             local_dir="out",
             verbose=2,
-            stop=MaximumIterationStopper(100000),
+            stop=MaximumIterationStopper(),
             checkpoint_config=air.CheckpointConfig(checkpoint_frequency=200)
         )
     )
@@ -92,8 +92,8 @@ if __name__ == '__main__':
         #hw = {"gpu": 0, "cpu": 3} # imac
         hw = {"gpu": 1, "cpu": 11}  # adris
 
-        env_params = {"size": [6, 8], "max_steps": 40, "reduced_obs": True, "dead_when_colliding": True}
-        #env_params = {"size": 6, "max_steps": 60, "reduced_obs": True, "dead_when_colliding": True, "indestructible_agent": False, "dead_near_bomb": True}
+        #env_params = {"size": [6, 8], "max_steps": 40, "reduced_obs": True, "dead_when_colliding": True}
+        env_params = {"size": [6, 8], "max_steps": 80, "reduced_obs": True, "dead_when_colliding": True, "indestructible_agent": False, "dead_near_bomb": True}
         #env_params = {"size": 10, "max_steps": 100, "indestructible_agent": False, "dead_near_bomb": True}
         # env_params = {"size": 10, "max_steps": 200, "dead_when_colliding": True, "dead_near_bomb": True, "indestructible_agent": False, "close_bomb_penalty": -1.0}
         nn_model = [256, 128, 64]
