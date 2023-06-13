@@ -942,5 +942,30 @@ class MyTestCase(unittest.TestCase):
         self.assertLess(max_steps[0], max_steps[1])
         self.assertLess(max_steps[1], max_steps[2])
 
+
+    def test_observation_space(self):
+        env = bomberworld.BomberworldEnv(10, 100, reduced_obs=False, flatten_obs=True)
+        env.reset()
+        ms,  = env.make_observation().shape
+        self.assertEqual(ms, 100)
+
+        env = bomberworld.BomberworldEnv(10, 100, reduced_obs=True, flatten_obs=True)
+        env.reset()
+        ms, = env.make_observation().shape
+        self.assertEqual(ms, 9)
+
+        env = bomberworld.BomberworldEnv(10, 100, reduced_obs=False, flatten_obs=False)
+        env.reset()
+        ms, ns, _ = env.make_observation().shape
+        self.assertEqual(ms, 10)
+        self.assertEqual(ns, 10)
+
+        env = bomberworld.BomberworldEnv(10, 100, reduced_obs=True, flatten_obs=False)
+        env.reset()
+        ms, ns, _ = env.make_observation().shape
+        self.assertEqual(ms, 3)
+        self.assertEqual(ns, 3)
+
+
 if __name__ == '__main__':
     unittest.main()

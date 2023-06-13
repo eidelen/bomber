@@ -16,7 +16,7 @@ from random import randrange
 
 class BomberworldEnv(gym.Env):
 
-    def __init__(self, size: int | List[int], max_steps: int, indestructible_agent=True, dead_near_bomb=False, dead_when_colliding=False, reduced_obs=False, move_penalty=-0.2, collision_penalty=-1.0,
+    def __init__(self, size: int | List[int], max_steps: int, indestructible_agent=True, dead_near_bomb=False, dead_when_colliding=False, reduced_obs=False, flatten_obs=True, move_penalty=-0.2, collision_penalty=-1.0,
                  bomb_penalty=-1.0, close_bomb_penalty=-2.0, rock_reward=1.0, end_game_reward=10.0 ):
         """
         Parameters
@@ -28,6 +28,7 @@ class BomberworldEnv(gym.Env):
         dead_near_bomb: Only active when indestructible_agent==False. When true, game ends when agent too close to bomb.
         dead_when_colliding: When true, game ends when agent collides with rock or wall.
         reduced_obs: When true, agent only sees surrounding 3x3 patch.
+        flatten_obs: When true, observation as vector. When false, observation as matrix.
         reward / penalty: Several reward and penalty options.
         """
 
@@ -52,12 +53,20 @@ class BomberworldEnv(gym.Env):
         self.dead_near_bomb = dead_near_bomb
         self.dead_when_colliding = dead_when_colliding
         self.reduced_obs = reduced_obs
+        self.flatten_obs = flatten_obs
         self.current_step = 0
 
         if self.reduced_obs:
-            self.observation_space = gym.spaces.Box(low=0, high=1, shape=(3 * 3,), dtype=np.float32)
+            if self.flatten_obs:
+                self.observation_space = gym.spaces.Box(low=0, high=1, shape=(3 * 3,), dtype=np.float32)
+            else:
+                self.observation_space = gym.spaces.Box(low=0, high=1, shape=(3, 3, 1), dtype=np.float32)
         else:
-            self.observation_space = gym.spaces.Box(low=0, high=1, shape=(size * size,), dtype=np.float32)
+            if self.flatten_obs:
+                self.observation_space = gym.spaces.Box(low=0, high=1, shape=(size * size,), dtype=np.float32)
+            else:
+                self.observation_space = gym.spaces.Box(low=0, high=1, shape=(1, size, size), dtype=np.float32)
+
         self.action_space = gym.spaces.Discrete(5)
 
 
@@ -134,8 +143,13 @@ class BomberworldEnv(gym.Env):
             return board
 
     def make_observation(self) -> np.ndarray:
-        o = self.make_observation_2D()
-        return o.flatten()
+        o = self.make_observation_2D() # return already full or reduced observation
+
+        if self.flatten_obs:
+            return o.flatten()
+        else:
+            m, n = o.shape
+            return o.reshape((1, m, n))
 
     def bomb_3x3(self, pos: Tuple[int, int]) -> int:
         pm, pn = pos
