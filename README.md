@@ -51,9 +51,9 @@ The agent receives a penalty if it is within a certain range of the blast. There
 <img src="https://github.com/eidelen/bomber/blob/main/rsc/smartbomber-intro.png" width="450">
 
 The learning performance was best when using a reduced observation space and a LSTM layer. 
-Below examples is an agent which was trained on 6x6 and 8x8 grid sizes.
+Below examples is an agent which was trained on 6x6 sizes.
 
-
+<img src="https://github.com/eidelen/bomber/blob/main/rsc/smart-bomber6x6.gif" width="350">
 
 ## Installation Notes
 ### Windows (Python 3.9 and 3.10)
